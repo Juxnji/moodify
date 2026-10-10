@@ -1,0 +1,34 @@
+name: 🐛 Report a problem
+description: Something looks off or doesn't work
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! The more details, the faster it can be fixed.
+  - type: input
+    id: spotify
+    attributes:
+      label: Spotify version
+      description: Spotify → "…" at the top left → Help → About Spotify
+      placeholder: e.g. 1.3.4.258
+    validations:
+      required: true
+  - type: input
+    id: moodify
+    attributes:
+      label: Moodify version
+      description: Shown at the end of the installation ("Moodify v… is installed")
+      placeholder: e.g. v1.0.0
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Just drag it in here or paste it with Ctrl+V.

@@ -1,0 +1,486 @@
+/* =========================================================
+   Moodify – a custom Spotify theme
+   Album cover background · frosted glass · accent from the cover
+   ========================================================= */
+
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap");
+
+:root {
+  --aura-accent: #e8892b;               /* overwritten by theme.js */
+  --aura-accent-rgb: 232, 137, 43;
+  --aura-on-accent: #000000;
+  --aura-glass: rgba(12, 12, 14, 0.42);  /* tint of the glass panels (medium) */
+  --aura-glass-strong: rgba(12, 12, 14, 0.62);
+  --aura-glass-border: rgba(255, 255, 255, 0.08);
+  --aura-blur: 8px;
+  --aura-radius: 14px;
+  --aura-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---------- Font ---------- */
+body,
+.encore-dark-theme,
+.encore-dark-theme * {
+  font-family: "Outfit", "SpotifyMixUI", "CircularSp", sans-serif !important;
+}
+
+/* ---------- Background: blurred album cover ---------- */
+#aura-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: #0b0b0c;
+  pointer-events: none;
+}
+.aura-bg-layer {
+  position: absolute;
+  inset: -80px;                         /* extra margin for the blur */
+  background-size: cover;
+  background-position: center;
+  filter: blur(14px) saturate(1.35);    /* slightly blurred */
+  transform: scale(1.08);
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+.aura-bg-layer.visible { opacity: 1; }
+.aura-bg-shade {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.38);      /* medium darkening */
+}
+
+/* Make Spotify's own surfaces transparent so the background shows through */
+body,
+.Root,
+.Root__top-container,
+.Root > div:has(> #main-view) {          /* the frame was renamed in Spotify 1.3.4 */
+  background: transparent !important;
+}
+
+/* ---------- Frosted glass panels ---------- */
+#global-nav-bar {
+  background: transparent !important;
+}
+#Desktop_LeftSidebar_Id,
+#main-view,
+#main-view + div > div,
+[data-testid="now-playing-bar"] {
+  background: var(--aura-glass) !important;
+  backdrop-filter: blur(var(--aura-blur)) saturate(1.4);
+  border: 1px solid var(--aura-glass-border);
+  border-radius: var(--aura-radius) !important;
+}
+[data-testid="now-playing-bar"] {
+  margin: 0;                            /* same width as the library/sidebar above */
+}
+/* The area behind the player bar is almost black in Spotify */
+div:has(> [data-testid="now-playing-bar"]) {
+  background: transparent !important;
+}
+
+/* Spotify's base colors semi-transparent so inner surfaces match the glass */
+.encore-dark-theme,
+.encore-dark-theme .encore-base-set {
+  --background-base: rgba(18, 18, 20, 0.0) !important;
+  --background-highlight: rgba(255, 255, 255, 0.08) !important;
+  --background-press: rgba(255, 255, 255, 0.04) !important;
+  --background-elevated-base: rgba(30, 30, 34, 0.92) !important;
+  --background-elevated-highlight: rgba(50, 50, 56, 0.95) !important;
+  --background-tinted-base: rgba(255, 255, 255, 0.08) !important;
+  --background-tinted-highlight: rgba(255, 255, 255, 0.13) !important;
+  --text-bright-accent: var(--aura-accent) !important;
+  --essential-bright-accent: var(--aura-accent) !important;
+}
+
+/* Remove the colored/grey header areas of playlists, albums and artists –
+   the album cover background should shine through. Spotify sets the color
+   either as background-color or as --background-base directly on the element. */
+#main-view div[style*="background-color"]:empty,
+#main-view div[style*="--background-base"]:empty:not(.main-topBar-container > div) {
+  display: none !important;
+}
+/* The bar that appears at the top when scrolling down: glass instead of grey */
+#main-view .main-topBar-container > div[style*="--background-base"] {
+  background: rgba(12, 12, 14, 0.55) !important;
+  backdrop-filter: blur(16px) saturate(1.4);
+}
+
+/* Green/blue Spotify buttons in the album color */
+.encore-bright-accent-set {
+  --background-base: var(--aura-accent) !important;
+  --background-highlight: var(--aura-accent) !important;
+  --background-press: var(--aura-accent) !important;
+  --text-base: var(--aura-on-accent) !important;
+}
+
+/* ---------- Rounded corners ---------- */
+img,
+.main-image-image,
+[data-encore-id="card"] {
+  border-radius: 10px;
+}
+/* Spotify puts a grey area with smaller corners behind images –
+   it peeked through at the rounded corners (e.g. the library on the left) */
+#Desktop_LeftSidebar_Id div:has(> img),
+#main-view div:has(> img),
+[data-encore-id="card"] div:has(> img),
+[data-testid="now-playing-bar"] div:has(> img) {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border-radius: 10px !important;
+}
+[data-testid="cover-art-button"] img,
+[data-testid="CoverSlotCollapsed__container"] img {
+  border-radius: 10px !important;
+  background-color: transparent !important;
+}
+/* The button under the cover is grey and peeked through at the rounded corners */
+[data-testid="cover-art-button"] {
+  background-color: transparent !important;
+  overflow: hidden;
+}
+
+/* ---------- Glow ---------- */
+/* Album cover at the bottom left glows in its own color */
+[data-testid="CoverSlotCollapsed__container"] [data-testid="cover-art-button"] {
+  border-radius: 10px;
+  /* No glow on the small cover: the glow gathers in the rounded corners
+     and looks like grey spots there */
+  box-shadow: none !important;
+  transition: box-shadow 0.6s var(--aura-ease);
+}
+
+/* Play button in the album color */
+[data-testid="control-button-playpause"] > span {
+  background-color: var(--aura-accent) !important;
+  color: var(--aura-on-accent) !important;
+  transition: box-shadow 0.25s var(--aura-ease), transform 0.25s var(--aura-ease), background-color 0.6s ease !important;
+}
+[data-testid="control-button-playpause"]:hover > span {
+  box-shadow: 0 0 18px 3px rgba(var(--aura-accent-rgb), 0.65);
+  transform: scale(1.06);
+}
+
+/* Other buttons glow on hover */
+[data-testid="player-controls"] button:not([data-testid="control-button-playpause"]),
+.main-nowPlayingBar-extraControls button {
+  transition: filter 0.2s ease, color 0.2s ease;
+}
+[data-testid="player-controls"] button:not([data-testid="control-button-playpause"]):hover,
+.main-nowPlayingBar-extraControls button:hover {
+  filter: drop-shadow(0 0 6px rgba(var(--aura-accent-rgb), 0.9));
+  color: var(--aura-accent) !important;
+}
+/* Top bar: only the icon glows – Spotify clips a glow around the whole
+   button into a square there */
+#global-nav-bar button svg {
+  transition: filter 0.2s ease;
+}
+#global-nav-bar button:hover {
+  color: var(--aura-accent) !important;
+}
+#global-nav-bar button:hover svg {
+  filter: drop-shadow(0 0 5px rgba(var(--aura-accent-rgb), 0.9));
+}
+
+/* Cards: soft hover area with rounded corners, the cover glows slightly */
+[data-encore-id="card"],
+[data-encore-id="card"]::before,
+[data-encore-id="card"]::after {
+  border-radius: 14px !important;
+}
+[data-encore-id="card"] img {
+  transition: box-shadow 0.35s var(--aura-ease), transform 0.35s var(--aura-ease);
+}
+[data-encore-id="card"]:hover img {
+  box-shadow: 0 6px 22px -4px rgba(var(--aura-accent-rgb), 0.6);
+  transform: scale(1.02);
+}
+
+/* ---------- Progress and volume bars ---------- */
+[data-testid="now-playing-bar"] .x-progressBar-progressBarBg {
+  height: 6px !important;
+  border-radius: 6px !important;
+  background-color: rgba(255, 255, 255, 0.18) !important;
+}
+[data-testid="now-playing-bar"] .x-progressBar-sliderArea {
+  border-radius: 6px !important;
+}
+[data-testid="now-playing-bar"] .x-progressBar-fillColor {
+  background-color: var(--aura-accent) !important;
+  box-shadow: 0 0 10px rgba(var(--aura-accent-rgb), 0.6);
+  transition: transform 0.95s linear, background-color 0.6s ease;
+}
+[data-testid="now-playing-bar"] [data-testid="progress-bar-handle"] {
+  background-color: #fff !important;
+  box-shadow: 0 0 8px rgba(var(--aura-accent-rgb), 0.9);
+}
+
+/* ---------- Home page: only "Recents" ---------- */
+/* Grey gradient at the top of the home page */
+div:has(> [data-testid="home-page"]) > div[style*="background-color"] {
+  display: none !important;
+}
+/* Filter chips at the top (All / Music / Podcasts …) */
+html[data-aura-page="home"] .main-view-container .contentSpacing:has([class*="legacy-chip"][role="checkbox"]) {
+  display: none !important;
+}
+/* Hide every section except "Recents" */
+[data-testid="home-page"] section:not([data-testid="component-shelf"]),
+[data-testid="home-page"] section[data-testid="component-shelf"]:not([aria-label="Zuletzt"]):not([aria-label="Zuletzt gehört"]):not([aria-label="Recently played"]):not([aria-label="Recents"]) {
+  display: none !important;
+}
+/* "Recents" as a fixed grid: 2 rows × 4 columns, everything visible, no scrolling */
+[data-testid="home-page"] section[data-testid="component-shelf"] [role="grid"] {
+  grid-auto-flow: row !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+  width: 100% !important;
+}
+/* theme.js decides which 8 are shown (hidden ones are skipped) */
+[data-testid="home-page"] section[data-testid="component-shelf"] [role="grid"] > [data-aura-hidden] {
+  display: none !important;
+}
+/* × to hide a tile, appears at the top right on hover */
+[data-testid="home-page"] [data-carousel-gridlist-item] {
+  position: relative;
+}
+.aura-hide-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 5;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font: 600 18px/28px "Outfit", sans-serif;
+  text-align: center;
+  padding: 0;
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.2s ease, transform 0.2s var(--aura-ease), background 0.2s ease;
+}
+[data-carousel-gridlist-item]:hover .aura-hide-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+.aura-hide-btn:hover {
+  background: var(--aura-accent);
+  color: var(--aura-on-accent);
+  box-shadow: 0 0 12px rgba(var(--aura-accent-rgb), 0.7);
+}
+
+[data-testid="home-page"] section[data-testid="component-shelf"] [data-carousel-gridlist-item] {
+  width: auto !important;
+  min-width: 0 !important;
+}
+[data-testid="home-page"] section[data-testid="component-shelf"] div:has(> [role="grid"]) {
+  width: 100% !important;
+}
+[data-testid="home-page"] section[data-testid="component-shelf"] div:has(> div > [role="grid"]) {
+  overflow: visible !important;
+}
+/* The left/right arrows aren't needed anymore */
+[data-testid="home-page"] section[data-testid="component-shelf"] div:has(> div > div > [role="grid"]) > div:not(:first-child) {
+  display: none !important;
+}
+[data-testid="home-page"] section[data-testid="component-shelf"] h2 {
+  font-size: 2rem !important;
+  font-weight: 700 !important;
+}
+
+/* ---------- Soft animations ---------- */
+.main-view-container__scroll-node-child > * {
+  animation: aura-fade-in 0.45s var(--aura-ease);
+}
+@keyframes aura-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+#Desktop_LeftSidebar_Id [role="row"],
+[data-testid="tracklist-row"] {
+  transition: background-color 0.2s ease;
+}
+
+/* The sidebar glows around its edge in the album color on hover */
+#main-view + div > div {
+  transition: box-shadow 0.35s var(--aura-ease), border-color 0.35s ease;
+}
+#main-view + div > div:hover {
+  border-color: rgba(var(--aura-accent-rgb), 0.55) !important;
+  box-shadow: 0 0 22px 2px rgba(var(--aura-accent-rgb), 0.45);
+}
+/* Marketplace (cart) button at the top: Spicetify's bar clips the circle on hover */
+.custom-navlinks-scrollable_container .spicetify-sc-contentArea,
+.custom-navlinks-scrollable_container .spicetify-sc-scroller {
+  overflow: visible !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+/* No scrollbars – scrolling with mouse wheel/touchpad still works */
+.os-scrollbar {
+  display: none !important;
+}
+::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Hand cursor on everything clickable (instead of the "Pointers" snippet) */
+button:not(:disabled),
+[role="button"],
+a[href],
+[data-encore-id="card"],
+[role="row"] {
+  cursor: pointer !important;
+}
+/* Library button at the top left: on hover Spotify fades in the "open" icon
+   but keeps the normal icon → both overlap. So hide the normal icon. */
+#Desktop_LeftSidebar_Id button:is([aria-label*="Bibliothek"], [aria-label*="Library"]) > span:first-child {
+  transition: opacity 0.15s ease;
+}
+#Desktop_LeftSidebar_Id button:is([aria-label*="Bibliothek"], [aria-label*="Library"]):hover > span:first-child {
+  opacity: 0 !important;
+}
+
+/* ---------- Right sidebar ("Now playing view") – layout from Spotify 1.3.4 ----------
+   The cover or video always fills the whole sidebar (whatever the window size),
+   song title + artist sit on top of it at the bottom. Fixed, no scrolling.
+   Layout:  panel > [header, scroll area > div > content > [image/video, info, …]]
+   Spotify barely uses stable class names here, so we go by element order. */
+
+/* Spicy Lyrics paints its own colorful background into the sidebar – we already have ours */
+#Desktop_PanelContainer_Id canvas.spicy-dynamic-bg {
+  display: none !important;
+}
+
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div {
+  position: relative;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+}
+
+/* Header floats on top instead of taking 64px of space, without a glass bar behind it */
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:first-child {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: transparent !important;
+  backdrop-filter: none !important;
+}
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:first-child :is(*, *::before),
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:first-child::before {
+  backdrop-filter: none !important;
+}
+/* Collapse button only on hover */
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:first-child button {
+  pointer-events: auto;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]):hover > div > div:first-child button {
+  opacity: 1;
+}
+/* Don't show which playlist/album is playing */
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:first-child a {
+  visibility: hidden !important;
+}
+/* "More", "Expand" and "Copy link" stay hidden */
+#Desktop_PanelContainer_Id button:is([aria-label="Mehr"], [aria-label="More"], [aria-label*="erweitern"], [aria-label*="Expand"], [aria-label="Link zum Song kopieren"], [aria-label="Copy link to Song"]) {
+  display: none !important;
+}
+
+/* Scroll area fills the height and doesn't scroll */
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2),
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+/* Content = frame of reference for image/video and title */
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div {
+  position: relative;
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+}
+
+/* --- Image or video: fills the whole sidebar --- */
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :first-child {
+  position: absolute !important;
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+  border-radius: 13px;
+}
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :first-child :is(div, a, img, video) {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  aspect-ratio: auto !important;
+}
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :first-child :is(img, video) {
+  object-fit: cover !important;
+  border-radius: 0 !important;
+}
+#Desktop_PanelContainer_Id div:has(> div > div > video) {
+  inset: 0 !important;
+}
+/* Always bright: Spotify dims the video (65 % brightness) and fades it to black at the top/bottom */
+#Desktop_PanelContainer_Id video {
+  filter: none !important;
+  opacity: 1 !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+#Desktop_PanelContainer_Id div:has(> div > video) ~ div,
+#Desktop_PanelContainer_Id div:has(> div > div > video) > div:not(:has(video)) {
+  display: none !important;
+}
+
+/* --- Bottom: only song title + artist, on top of the image --- */
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :nth-child(2) {
+  position: absolute !important;
+  left: 16px;
+  right: 16px;
+  bottom: 14px;
+  z-index: 2;
+  height: auto !important;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
+}
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 38%;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 0 0 13px 13px;
+  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.6));
+}
+/* No song credits/artist info/queue/Spicy Lyrics card */
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :nth-child(2) > :not(:has(.encore-text-title-small)),
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :nth-child(n + 3) {
+  display: none !important;
+}
+/* X / + next to the song title only on hover */
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :nth-child(2) button {
+  opacity: 0 !important;
+  transition: opacity 0.25s ease !important;
+}
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]):hover > div > div:nth-child(2) > div > div > :nth-child(2) button {
+  opacity: 1 !important;
+}

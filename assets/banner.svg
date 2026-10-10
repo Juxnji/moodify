@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-label="Moodify – Your Spotify, in the color of your music">
+  <defs>
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="70"/>
+    </filter>
+    <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.55" stop-color="#ffd6f2"/>
+      <stop offset="1" stop-color="#c9b6ff"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.03"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff4d8d"/>
+      <stop offset="0.5" stop-color="#a855f7"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <clipPath id="round">
+      <rect width="1280" height="400" rx="28"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#round)">
+    <!-- dark base with blurred color blobs (like the album cover background) -->
+    <rect width="1280" height="400" fill="#0b0b12"/>
+    <g filter="url(#blur)" opacity="0.95">
+      <circle cx="230" cy="110" r="190" fill="#ff4d8d"/>
+      <circle cx="560" cy="330" r="200" fill="#7c3aed"/>
+      <circle cx="930" cy="90" r="180" fill="#22d3ee"/>
+      <circle cx="1150" cy="320" r="170" fill="#f59e0b"/>
+    </g>
+    <rect width="1280" height="400" fill="#000000" opacity="0.25"/>
+
+    <!-- frosted glass card -->
+    <rect x="200" y="70" width="880" height="260" rx="28" fill="url(#glass)" stroke="#ffffff" stroke-opacity="0.18"/>
+
+    <!-- equalizer icon -->
+    <g transform="translate(272 152)" fill="url(#bar)">
+      <rect x="0" y="40" width="16" height="56" rx="8"/>
+      <rect x="26" y="10" width="16" height="86" rx="8"/>
+      <rect x="52" y="28" width="16" height="68" rx="8"/>
+      <rect x="78" y="0" width="16" height="96" rx="8"/>
+    </g>
+
+    <text x="410" y="230" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="118" font-weight="800" letter-spacing="-2" fill="url(#title)">Moodify</text>
+    <text x="414" y="282" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="500" fill="#ffffff" fill-opacity="0.78">Your Spotify – in the color of your music</text>
+
+    <!-- progress bar -->
+    <rect x="272" y="300" width="736" height="6" rx="3" fill="#ffffff" fill-opacity="0.18"/>
+    <rect x="272" y="300" width="430" height="6" rx="3" fill="url(#bar)"/>
+    <circle cx="702" cy="303" r="8" fill="#ffffff"/>
+  </g>
+</svg>
