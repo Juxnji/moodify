@@ -45,7 +45,7 @@
 | 🎨 **Colors from the cover** | Play button, progress bar and glow effects automatically match the cover |
 | 🧊 **Frosted glass** | Translucent panels with rounded corners and the modern *Outfit* font |
 | ✨ **Glow** | Buttons glow on hover, the sidebar lights up in the album color |
-| 🏠 **Clean home page** | Only "Recents" as a fixed 2 × 4 grid – hide single tiles with **×** |
+| 🏠 **Clean home page** | Only "Recents" (or "Jump back in") as a fixed 2 × 4 grid – hide single tiles with **×** |
 | 🎬 **Now playing sidebar** | The cover or song video fills the whole sidebar with the title on top – fixed, no scrolling |
 | 🛒 **Marketplace included** | Patched for new Spotify versions: the *Themes · Snippets · Apps* tabs are back |
 | 🎤 **Extras** | [Spicy Lyrics](https://github.com/Spikerko/spicy-lyrics) (karaoke-style lyrics), volume in %, "Play next" |
@@ -109,7 +109,8 @@ It automatically gets the newest Moodify version that matches your Spotify.
 
 | Moodify | Tested with Spotify | Spicetify | Date |
 |:---:|:---:|:---:|:---:|
-| [**v1.0.0**](https://github.com/Juxnji/moodify/releases/tag/v1.0.0) | 1.3.4 | 2.45.3 | 2026-10-10 |
+| [**v1.0.1**](https://github.com/Juxnji/moodify/releases/tag/v1.0.1) | 1.3.4 | 2.45.3 | 2026-10-10 |
+| [v1.0.0](https://github.com/Juxnji/moodify/releases/tag/v1.0.0) | 1.3.4 | 2.45.3 | 2026-10-10 |
 
 What changed in each version: [**Changelog**](CHANGELOG.md)
 
@@ -120,7 +121,7 @@ What changed in each version: [**Changelog**](CHANGELOG.md)
 Usually not needed – the installer picks the right one. If you want to anyway:
 
 ```powershell
-$env:MOODIFY_VERSION = "v1.0.0"; iwr -useb https://raw.githubusercontent.com/Juxnji/moodify/main/install.ps1 | iex
+$env:MOODIFY_VERSION = "v1.0.1"; iwr -useb https://raw.githubusercontent.com/Juxnji/moodify/main/install.ps1 | iex
 ```
 
 </details>

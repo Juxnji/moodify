@@ -157,12 +157,17 @@ function Install-Moodify {
     # --- 7. Apply to Spotify -----------------------------------------------
     Write-Step "Applying everything to Spotify (Spotify will restart)"
     Get-Process Spotify -ErrorAction SilentlyContinue | Stop-Process -Force
-    & $spicetify backup apply
+    # Is there already a Spicetify backup for exactly this Spotify version?
+    # Yes -> just apply. No (first install or Spotify was updated) -> make a new backup first.
+    $cfgNow = Get-Content ((& $spicetify path -c | Select-Object -Last 1).Trim()) -Raw
+    $backupVersion = ""
+    if ($cfgNow -match '(?ms)^\[Backup\][^\[]*?^version\s*=\s*(\S+)') { $backupVersion = $Matches[1] }
+    $backupIsCurrent = $backupVersion -and $backupVersion.StartsWith($spotifyVersion)
+    if ($backupIsCurrent) { & $spicetify apply } else { & $spicetify backup apply }
     if ($LASTEXITCODE -ne 0) {
         Write-Note "First attempt didn't work, trying another way ..."
-        & $spicetify apply
+        if ($backupIsCurrent) { & $spicetify restore backup apply } else { & $spicetify apply }
     }
-    if ($LASTEXITCODE -ne 0) { & $spicetify restore backup apply }
     if ($LASTEXITCODE -ne 0) { Write-Fail "Applying didn't work. The message above shows why."; return }
 
     Write-Host ""

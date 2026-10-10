@@ -226,9 +226,10 @@ div:has(> [data-testid="home-page"]) > div[style*="background-color"] {
 html[data-aura-page="home"] .main-view-container .contentSpacing:has([class*="legacy-chip"][role="checkbox"]) {
   display: none !important;
 }
-/* Hide every section except "Recents" */
+/* Hide every section except the one theme.js picked as "Recents" (data-aura-recents).
+   Spotify doesn't always show "Recents" – then theme.js falls back to "Jump back in". */
 [data-testid="home-page"] section:not([data-testid="component-shelf"]),
-[data-testid="home-page"] section[data-testid="component-shelf"]:not([aria-label="Zuletzt"]):not([aria-label="Zuletzt gehört"]):not([aria-label="Recently played"]):not([aria-label="Recents"]) {
+[data-testid="home-page"] section[data-testid="component-shelf"]:not([data-aura-recents]) {
   display: none !important;
 }
 /* "Recents" as a fixed grid: 2 rows × 4 columns, everything visible, no scrolling */

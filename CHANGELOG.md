@@ -5,6 +5,21 @@ Which version fits which Spotify version is also listed in [`versions.json`](ver
 
 ---
 
+## [v1.0.1](https://github.com/Juxnji/moodify/releases/tag/v1.0.1) – 2026-10-10
+
+**Tested with:** Spotify 1.3.4 · Spicetify 2.45.3 · Windows 11
+
+### Fixed
+- The home page could be empty: Spotify doesn't show "Recents" every day. Moodify now falls back to "Jump back in" (also recently played things), and the home page is never empty
+- Background and colors sometimes didn't load after starting Spotify with paused music – the current song is now also read from Spotify's own player state
+- A lost song change event can no longer leave an old cover in the background
+- The × tooltip on tiles is shown in English or German, depending on the Spotify language
+
+### Installer
+- If Spicetify is already set up, the installer goes straight to applying instead of showing a backup warning first
+
+---
+
 ## [v1.0.0](https://github.com/Juxnji/moodify/releases/tag/v1.0.0) – 2026-10-10
 
 **Tested with:** Spotify 1.3.4 · Spicetify 2.45.3 · Windows 11

@@ -124,20 +124,35 @@
     });
   }
 
+  // Spicetify.Player.data is sometimes still empty after starting with paused music,
+  // so fall back to Spotify's own player state.
+  const currentItem = () => {
+    if (Spicetify.Player.data?.item) return Spicetify.Player.data.item;
+    try { return Spicetify.Platform.PlayerAPI?.getState?.()?.item || null; } catch { return null; }
+  };
+  const coverOf = item => {
+    const meta = item.metadata || {};
+    const large = item.images?.find(i => i.label === "large") || item.images?.[0];
+    return toUrl(meta.image_xlarge_url || meta.image_large_url || meta.image_url || large?.url);
+  };
+
+  let lastUri = null;
   async function update() {
-    const item = Spicetify.Player.data?.item;
+    const item = currentItem();
     if (!item) {
       setTimeout(update, 500);                      // Spotify is still loading
       return;
     }
-    const meta = item.metadata || {};
-    const image = toUrl(meta.image_xlarge_url || meta.image_large_url || meta.image_url || item.images?.[0]?.url);
+    lastUri = item.uri;
+    const image = coverOf(item);
     setBackground(image);
     const rgb = image && (await extractColor(image));
     if (rgb) setAccent(rgb);
   }
 
   Spicetify.Player.addEventListener("songchange", update);
+  // Safety net in case a song change event gets lost
+  setInterval(() => { const item = currentItem(); if (item && item.uri !== lastUri) update(); }, 1500);
   update();
 
   // ---------- Window buttons (top right) ----------
@@ -163,11 +178,25 @@
     return m ? m[1] : null;
   };
 
+  // Spotify's home page changes from day to day and doesn't always contain "Recents".
+  // Then use "Jump back in" (also recently played things), and as a last resort the
+  // first row – so the home page is never empty.
+  const RECENT_LABELS = ["Zuletzt", "Zuletzt gehört", "Recently played", "Recents"];
+  const FALLBACK_LABELS = ["Wieder reinhören", "Jump back in"];
+  function findRecentsShelf() {
+    const shelves = [...document.querySelectorAll('[data-testid="home-page"] section[data-testid="component-shelf"]')];
+    const label = s => (s.getAttribute("aria-label") || "").trim();
+    return shelves.find(s => RECENT_LABELS.includes(label(s)))
+      || shelves.find(s => FALLBACK_LABELS.includes(label(s)))
+      || shelves[0];
+  }
+
   function processRecents() {
-    const RECENT_LABELS = ["Zuletzt", "Zuletzt gehört", "Recently played", "Recents"];
-    const shelf = [...document.querySelectorAll('[data-testid="home-page"] section[data-testid="component-shelf"]')]
-      .find(s => RECENT_LABELS.includes(s.getAttribute("aria-label")));
-    const grid = shelf?.querySelector('[role="grid"]');
+    const shelf = findRecentsShelf();
+    document.querySelectorAll("[data-aura-recents]").forEach(s => { if (s !== shelf) s.removeAttribute("data-aura-recents"); });
+    if (!shelf) return;
+    if (!shelf.hasAttribute("data-aura-recents")) shelf.setAttribute("data-aura-recents", "");
+    const grid = shelf.querySelector('[role="grid"]');
     if (!grid) return;
     let shown = 0;
     for (const item of grid.children) {
