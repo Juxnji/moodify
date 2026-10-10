@@ -71,9 +71,9 @@ iwr -useb https://raw.githubusercontent.com/Juxnji/moodify/main/install.ps1 | ie
 
 Done – Spotify restarts and looks like Moodify. 🎉
 
-> [!NOTE]
-> If Spicetify gets installed for the first time, it may ask whether to install the Marketplace.
-> Just press **N** – Moodify already ships a patched Marketplace.
+> [!TIP]
+> **You don't need to install Spicetify yourself.** If it's missing, the installer sets it up automatically –
+> in the version Moodify was tested with, without asking any questions.
 
 <details>
 <summary><b>What exactly does it do?</b></summary>
@@ -81,12 +81,30 @@ Done – Spotify restarts and looks like Moodify. 🎉
 
 1. Checks that Spotify is installed and reads its version
 2. Looks up the Moodify version tested with that Spotify version in [`versions.json`](versions.json)
-3. Installs [Spicetify](https://spicetify.app) (if needed) or updates it if it's too old
+3. Installs [Spicetify](https://spicetify.app) if it's missing, or updates it if it's too old
 4. Downloads Moodify and the patched Marketplace
 5. Downloads the extensions directly from their authors
 6. Configures Spicetify and applies everything to Spotify
 
 You can read the whole script [here](install.ps1).
+
+</details>
+
+<details>
+<summary><b>Prefer to install Spicetify yourself first?</b></summary>
+<br>
+
+Totally optional – the line above does this for you. If you want to do it by hand anyway,
+run the official Spicetify installer in PowerShell (**not** as administrator):
+
+```powershell
+iwr -useb https://raw.githubusercontent.com/spicetify/cli/main/install.ps1 | iex
+```
+
+- When it asks *"Do you also want to install Spicetify Marketplace?"* you can press **N** – Moodify brings a patched Marketplace.
+- Afterwards run the Moodify line from step 3. It detects the existing Spicetify and uses it.
+
+More about Spicetify: [spicetify.app/docs/getting-started](https://spicetify.app/docs/getting-started)
 
 </details>
 
@@ -145,6 +163,24 @@ If the installer says "not tested with Spotify X yet", there may be small visual
 
 You probably have the Microsoft Store version, which doesn't work with Spicetify.
 Uninstall it and install Spotify from [spotify.com/download](https://www.spotify.com/download).
+
+</details>
+
+<details>
+<summary><b>Spicy Lyrics says "Waiting for Spicetify"</b></summary>
+<br>
+
+This can happen on the very first start after installing, while Spicetify is still getting ready.
+Click **"Reload Spotify"** in that message – after that it works normally.
+
+</details>
+
+<details>
+<summary><b>"PowerShell is running as administrator"</b></summary>
+<br>
+
+Spicetify must not run with administrator rights. Close the window, open PowerShell again **normally**
+(<kbd>Windows</kbd> → `PowerShell` → <kbd>Enter</kbd>, not "Run as administrator") and paste the line again.
 
 </details>
 

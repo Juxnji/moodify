@@ -17,6 +17,9 @@ Which version fits which Spotify version is also listed in [`versions.json`](ver
 
 ### Installer
 - If Spicetify is already set up, the installer goes straight to applying instead of showing a backup warning first
+- Installs Spicetify by itself when it's missing – no questions asked, in the version tested with Moodify
+- Finds Spicetify installed in other places (e.g. via Scoop or winget)
+- Stops with a clear message when PowerShell runs as administrator
 
 ---
 

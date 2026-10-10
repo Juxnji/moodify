@@ -24,9 +24,45 @@ function Write-Fail($text) { Write-Host ""; Write-Host "ERROR: $text" -Foregroun
 # "1.3.4.258" -> "1.3.4"
 function Get-ShortVersion([string]$v) { (($v -split '\.') | Select-Object -First 3) -join '.' }
 
+function Test-IsAdmin {
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    (New-Object Security.Principal.WindowsPrincipal($identity)).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+# Installs the Spicetify command line tool without any questions (same steps as the
+# official installer: download the release, unpack it, add it to PATH).
+# $PreferredVersion = "2.45.3" installs exactly that version, empty = latest version.
+function Install-SpicetifyCli([string]$TargetDir, [string]$PreferredVersion) {
+    $arch = switch ($env:PROCESSOR_ARCHITECTURE) { "AMD64" { "x64" } "ARM64" { "arm64" } default { "x32" } }
+    $version = $PreferredVersion
+    if (-not $version) {
+        try { $version = (Invoke-RestMethod -UseBasicParsing "https://api.github.com/repos/spicetify/cli/releases/latest").tag_name -replace '^v', '' } catch { }
+    }
+    if (-not $version) { throw "Could not find out which Spicetify version to download." }
+    $zip = Join-Path $env:TEMP "spicetify-$version.zip"
+    Invoke-WebRequest -UseBasicParsing "https://github.com/spicetify/cli/releases/download/v$version/spicetify-$version-windows-$arch.zip" -OutFile $zip
+    New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
+    Expand-Archive -Path $zip -DestinationPath $TargetDir -Force
+    Remove-Item $zip -Force -ErrorAction SilentlyContinue
+    # Make "spicetify" available in new terminals as well
+    $userPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+    if (-not $userPath) { $userPath = "" }
+    if (($userPath -split ';') -notcontains $TargetDir) {
+        [Environment]::SetEnvironmentVariable("PATH", (($userPath.TrimEnd(';') + ";" + $TargetDir).TrimStart(';')), "User")
+    }
+    return $version
+}
+
 function Install-Moodify {
     Write-Host ""
     Write-Host "  ===  Moodify  ===" -ForegroundColor Magenta
+
+    # --- 0. Not as administrator --------------------------------------------
+    if (Test-IsAdmin) {
+        Write-Fail ("PowerShell is running as administrator - Spicetify doesn't work like that.`n" +
+            "   Close this window, open PowerShell normally (NOT 'Run as administrator') and run the line again.")
+        return
+    }
 
     # --- 1. Is Spotify installed? -------------------------------------------
     Write-Step "Checking Spotify"
@@ -76,10 +112,17 @@ function Install-Moodify {
     $spicetifyDir = Join-Path $env:LOCALAPPDATA "spicetify"
     $spicetify = Join-Path $spicetifyDir "spicetify.exe"
     if (-not (Test-Path $spicetify)) {
-        Write-Note "Installing Spicetify ..."
-        Write-Note "If it asks whether to install the Marketplace: press N"
-        Write-Note "(Moodify ships its own, patched Marketplace)."
-        Invoke-WebRequest -UseBasicParsing "https://raw.githubusercontent.com/spicetify/cli/main/install.ps1" | Invoke-Expression
+        # maybe installed somewhere else (e.g. with Scoop or winget)
+        $found = Get-Command spicetify -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($found) { $spicetify = $found.Source; $spicetifyDir = Split-Path $spicetify }
+    }
+    if (-not (Test-Path $spicetify)) {
+        # Tested combination -> that Spicetify version, otherwise the newest one
+        $preferred = if ($entry -and $entry.spicetify -and ($entry.spotify -contains $spotifyShort)) { $entry.spicetify } else { "" }
+        Write-Note "Spicetify is not installed yet - installing it now ..."
+        $installedCli = Install-SpicetifyCli -TargetDir $spicetifyDir -PreferredVersion $preferred
+        $spicetify = Join-Path $spicetifyDir "spicetify.exe"
+        if (Test-Path $spicetify) { Write-Ok "Installed Spicetify $installedCli" }
     }
     if (-not (Test-Path $spicetify)) { Write-Fail "Spicetify could not be installed."; return }
     $env:PATH = "$spicetifyDir;$env:PATH"
