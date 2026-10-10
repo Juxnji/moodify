@@ -195,6 +195,18 @@ Still not working? [Report a problem](https://github.com/Juxnji/moodify/issues/n
 </details>
 
 <details>
+<summary><b>My antivirus says <code>install.ps1</code> is "suspicious"</b></summary>
+<br>
+
+Some antivirus programs flag every PowerShell script that downloads files and changes another app as *suspicious* –
+that's exactly what installing a Spotify theme has to do. It's a warning based on behavior, not a virus finding.
+Windows Defender doesn't report anything, and you can read every line of the script [here](install.ps1).
+
+The script isn't needed anymore after installing, so it's fine if your antivirus removes it – Moodify keeps working.
+
+</details>
+
+<details>
 <summary><b>Is this allowed?</b></summary>
 <br>
 
