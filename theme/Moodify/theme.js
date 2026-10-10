@@ -239,6 +239,100 @@
     if (extra && !extra.classList.contains("main-nowPlayingBar-extraControls")) extra.classList.add("main-nowPlayingBar-extraControls");
   }
 
+  // ---------- Now playing sidebar: find the cover/video and the song title ----------
+  // Spotify arranges this sidebar differently depending on the song (music videos, tour
+  // dates, …) and sometimes even the account. Instead of relying on its structure we look
+  // for the cover/video and the song title and mark them; user.css shows only these:
+  //   data-aura-npv="content" – the closest box around image and title
+  //   data-aura-npv="visual"  – the cover or video        data-aura-npv="info" – the title row
+  //   data-aura-npv-chain     – wrappers between panel and content (fill the height)
+  //   data-aura-npv-hide      – everything else (credits, tour dates, music videos, queue, …)
+  const NPV_ATTRS = ["data-aura-npv", "data-aura-npv-hide", "data-aura-npv-chain"];
+  const childOf = (parent, el) => { while (el && el.parentElement !== parent) el = el.parentElement; return el; };
+
+  function markNowPlaying() {
+    const panel = document.querySelector("#Desktop_PanelContainer_Id");
+    if (!panel) return;
+    const marks = new Map();
+    const mark = (el, attr, value = "") => { if (!el) return; if (!marks.has(el)) marks.set(el, {}); marks.get(el)[attr] = value; };
+
+    if (/Aktueller Titel|Now playing/i.test(panel.getAttribute("aria-label") || "")) {
+      const inner = panel.firstElementChild;
+      const header = inner?.firstElementChild;
+      const outsideHeader = el => !(header && header.contains(el));
+      const visual = [...panel.querySelectorAll('[data-testid="cover-art-slot"], video')].find(outsideHeader);
+      let title = [...panel.querySelectorAll(".encore-text-title-small")].find(outsideHeader);
+      if (!title) {
+        const name = currentItem()?.name;
+        if (name) title = [...panel.querySelectorAll("a, span, p, div")].find(e => e.children.length === 0 && e.textContent.trim() === name && outsideHeader(e));
+      }
+      if (visual && title) {
+        let content = visual.parentElement;
+        while (content && !content.contains(title)) content = content.parentElement;
+        if (content && content !== panel && panel.contains(content)) {
+          const visualBox = childOf(content, visual);
+          const infoBox = childOf(content, title);
+          mark(content, "data-aura-npv", "content");
+          mark(visualBox, "data-aura-npv", "visual");
+          mark(infoBox, "data-aura-npv", "info");
+          for (const c of content.children) if (c !== visualBox && c !== infoBox) mark(c, "data-aura-npv-hide");
+          // Inside the title box keep only the part with the title (and its buttons)
+          let box = infoBox;
+          while (box && box !== title && (box === infoBox || box.querySelector("h2, h3, section, #SpicyLyricsNPVCard"))) {
+            const keep = childOf(box, title);
+            for (const c of box.children) if (c !== keep) mark(c, "data-aura-npv-hide");
+            box = keep;
+          }
+          for (let n = content.parentElement; n && n !== inner && n !== panel; n = n.parentElement) mark(n, "data-aura-npv-chain");
+        }
+      }
+    }
+
+    // Only touch attributes that actually change
+    for (const el of panel.querySelectorAll("[data-aura-npv], [data-aura-npv-hide], [data-aura-npv-chain]")) {
+      const want = marks.get(el) || {};
+      for (const a of NPV_ATTRS) if (!(a in want) && el.hasAttribute(a)) el.removeAttribute(a);
+    }
+    for (const [el, want] of marks) for (const [a, v] of Object.entries(want)) if (el.getAttribute(a) !== v) el.setAttribute(a, v);
+  }
+
+  // ---------- Debug info for bug reports (Ctrl+Alt+Shift+M) ----------
+  // Copies the layout of the now playing sidebar (element types, sizes, Spotify's
+  // internal names – no song titles, no names) so problems can be fixed remotely.
+  function debugInfo() {
+    const panel = document.querySelector("#Desktop_PanelContainer_Id");
+    const version = Spicetify.Platform?.PlatformData?.client_version_triple || Spicetify.Platform?.version || "?";
+    const lines = [`Moodify debug · Spotify ${version} · panel: ${panel ? "found" : "missing"}`];
+    const walk = (el, depth) => {
+      if (depth > 14 || lines.length > 450) return;
+      for (const c of el.children) {
+        if (c instanceof SVGElement || c.tagName === "PATH") continue;
+        const r = c.getBoundingClientRect();
+        if (!r.width && !r.height && depth > 4) continue;
+        const tags = [
+          [...c.classList].slice(0, 2).join("."),
+          c.getAttribute("data-testid") && `[${c.getAttribute("data-testid")}]`,
+          c.getAttribute("data-aura-npv") && `{${c.getAttribute("data-aura-npv")}}`,
+          c.hasAttribute("data-aura-npv-hide") && "{hide}",
+          c.hasAttribute("data-aura-npv-chain") && "{chain}",
+          getComputedStyle(c).display === "none" && "(hidden)"
+        ].filter(Boolean).join(" ");
+        lines.push(`${" ".repeat(depth)}${c.tagName.toLowerCase()} ${Math.round(r.width)}x${Math.round(r.height)} ${tags}`);
+        walk(c, depth + 1);
+      }
+    };
+    if (panel) walk(panel, 0);
+    return lines.join("\n");
+  }
+  // Spicetify's shortcut helper is sometimes not ready yet when the theme starts → wait for it
+  (function bindDebugShortcut() {
+    if (!Spicetify.Mousetrap?.bind) { setTimeout(bindDebugShortcut, 500); return; }
+    Spicetify.Mousetrap.bind("ctrl+alt+shift+m", () => {
+      Spicetify.Platform?.ClipboardAPI?.copy(debugInfo());
+      Spicetify.showNotification?.(isGerman() ? "Moodify: Debug-Infos kopiert – einfach in eine Nachricht einfügen" : "Moodify: debug info copied – just paste it into a message");
+    });
+  })();
+
   let domQueued = false;
   new MutationObserver(() => {
     if (domQueued) return;
@@ -246,10 +340,12 @@
     requestAnimationFrame(() => {
       domQueued = false;
       compatBridge();
+      markNowPlaying();
       if (root.getAttribute("data-aura-page") === "home") processRecents();
     });
   }).observe(document.body, { childList: true, subtree: true });
   compatBridge();
+  markNowPlaying();
 
   // ---------- Remember the current page (for the tidied-up home page) ----------
   const setPage = loc => {

@@ -351,8 +351,8 @@ a[href],
 /* ---------- Right sidebar ("Now playing view") – layout from Spotify 1.3.4 ----------
    The cover or video always fills the whole sidebar (whatever the window size),
    song title + artist sit on top of it at the bottom. Fixed, no scrolling.
-   Layout:  panel > [header, scroll area > div > content > [image/video, info, …]]
-   Spotify barely uses stable class names here, so we go by element order. */
+   Spotify barely uses stable class names here and arranges the sidebar differently
+   depending on the song, so theme.js finds and marks the parts (data-aura-npv). */
 
 /* Spicy Lyrics paints its own colorful background into the sidebar – we already have ours */
 #Desktop_PanelContainer_Id canvas.spicy-dynamic-bg {
@@ -399,24 +399,30 @@ a[href],
   display: none !important;
 }
 
-/* Scroll area fills the height and doesn't scroll */
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2),
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div {
+/* The parts below are found and marked by theme.js (see markNowPlaying there),
+   so this works no matter how Spotify nests them:
+   chain   = wrappers between the panel and the content – fill the height, no scrolling
+   content = frame of reference for image/video and title
+   visual  = the cover or video        info = the song title row
+   data-aura-npv-hide = everything else (credits, tour dates, music videos, queue, lyrics card …) */
+#Desktop_PanelContainer_Id [data-aura-npv-chain] {
   flex: 1 1 auto !important;
   min-height: 0 !important;
   height: 100% !important;
   overflow: hidden !important;
 }
-/* Content = frame of reference for image/video and title */
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div {
-  position: relative;
+#Desktop_PanelContainer_Id [data-aura-npv="content"] {
+  position: relative !important;
   height: 100% !important;
   min-height: 0 !important;
   padding: 0 !important;
 }
+#Desktop_PanelContainer_Id [data-aura-npv-hide] {
+  display: none !important;
+}
 
 /* --- Image or video: fills the whole sidebar --- */
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :first-child {
+#Desktop_PanelContainer_Id [data-aura-npv="visual"] {
   position: absolute !important;
   inset: 0 !important;
   width: auto !important;
@@ -426,14 +432,14 @@ a[href],
   overflow: hidden;
   border-radius: 13px;
 }
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :first-child :is(div, a, img, video) {
+#Desktop_PanelContainer_Id [data-aura-npv="visual"] :is(div, a, img, video) {
   width: 100% !important;
   height: 100% !important;
   max-width: none !important;
   margin: 0 !important;
   aspect-ratio: auto !important;
 }
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :first-child :is(img, video) {
+#Desktop_PanelContainer_Id [data-aura-npv="visual"] :is(img, video) {
   object-fit: cover !important;
   border-radius: 0 !important;
 }
@@ -453,16 +459,17 @@ a[href],
 }
 
 /* --- Bottom: only song title + artist, on top of the image --- */
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :nth-child(2) {
+#Desktop_PanelContainer_Id [data-aura-npv="info"] {
   position: absolute !important;
   left: 16px;
   right: 16px;
   bottom: 14px;
   z-index: 2;
   height: auto !important;
+  margin: 0 !important;
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
 }
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div::after {
+#Desktop_PanelContainer_Id [data-aura-npv="content"]::after {
   content: "";
   position: absolute;
   inset: auto 0 0 0;
@@ -472,19 +479,11 @@ a[href],
   border-radius: 0 0 13px 13px;
   background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.6));
 }
-/* No song credits/artist info/tour dates/similar music videos/queue/Spicy Lyrics card.
-   Some of these sections contain big titles too (e.g. songs with a music video),
-   so also hide everything that has a section heading. */
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :nth-child(2) > :not(:has(.encore-text-title-small)),
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :nth-child(2) > :has(h2, section, #SpicyLyricsNPVCard),
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :nth-child(n + 3) {
-  display: none !important;
-}
 /* X / + next to the song title only on hover */
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :nth-child(2) button {
+#Desktop_PanelContainer_Id [data-aura-npv="info"] button {
   opacity: 0 !important;
   transition: opacity 0.25s ease !important;
 }
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]):hover > div > div:nth-child(2) > div > div > :nth-child(2) button {
+#Desktop_PanelContainer_Id:hover [data-aura-npv="info"] button {
   opacity: 1 !important;
 }

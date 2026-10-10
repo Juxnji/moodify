@@ -5,6 +5,18 @@ Which version fits which Spotify version is also listed in [`versions.json`](ver
 
 ---
 
+## [v1.0.3](https://github.com/Juxnji/moodify/releases/tag/v1.0.3) – 2026-10-10
+
+**Tested with:** Spotify 1.3.4 · Spicetify 2.45.3 · Windows 11
+
+### Fixed
+- Now playing sidebar: Spotify arranges this sidebar differently depending on the song and even the account, so on some PCs credits, music videos and artist info still showed up. Moodify now finds the cover/video and the song title itself and hides everything else – no matter how Spotify nests things
+
+### New
+- **Ctrl + Alt + Shift + M** in Spotify copies debug info about the sidebar layout (no song titles or names) – handy for bug reports
+
+---
+
 ## [v1.0.2](https://github.com/Juxnji/moodify/releases/tag/v1.0.2) – 2026-10-10
 
 **Tested with:** Spotify 1.3.4 · Spicetify 2.45.3 · Windows 11

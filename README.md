@@ -127,7 +127,8 @@ It automatically gets the newest Moodify version that matches your Spotify.
 
 | Moodify | Tested with Spotify | Spicetify | Date |
 |:---:|:---:|:---:|:---:|
-| [**v1.0.2**](https://github.com/Juxnji/moodify/releases/tag/v1.0.2) | 1.3.4 | 2.45.3 | 2026-10-10 |
+| [**v1.0.3**](https://github.com/Juxnji/moodify/releases/tag/v1.0.3) | 1.3.4 | 2.45.3 | 2026-10-10 |
+| [v1.0.2](https://github.com/Juxnji/moodify/releases/tag/v1.0.2) | 1.3.4 | 2.45.3 | 2026-10-10 |
 | [v1.0.1](https://github.com/Juxnji/moodify/releases/tag/v1.0.1) | 1.3.4 | 2.45.3 | 2026-10-10 |
 | [v1.0.0](https://github.com/Juxnji/moodify/releases/tag/v1.0.0) | 1.3.4 | 2.45.3 | 2026-10-10 |
 
@@ -140,7 +141,7 @@ What changed in each version: [**Changelog**](CHANGELOG.md)
 Usually not needed – the installer picks the right one. If you want to anyway:
 
 ```powershell
-$env:MOODIFY_VERSION = "v1.0.2"; iwr -useb https://raw.githubusercontent.com/Juxnji/moodify/main/install.ps1 | iex
+$env:MOODIFY_VERSION = "v1.0.3"; iwr -useb https://raw.githubusercontent.com/Juxnji/moodify/main/install.ps1 | iex
 ```
 
 </details>
@@ -164,6 +165,17 @@ If the installer says "not tested with Spotify X yet", there may be small visual
 
 You probably have the Microsoft Store version, which doesn't work with Spicetify.
 Uninstall it and install Spotify from [spotify.com/download](https://www.spotify.com/download).
+
+</details>
+
+<details>
+<summary><b>Something in the sidebar looks wrong</b></summary>
+<br>
+
+Run the [install line](#-installation) again first – maybe there's already a fix.
+If not: click into Spotify, press <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>M</kbd> and paste the copied text
+into a [problem report](https://github.com/Juxnji/moodify/issues/new/choose) together with a screenshot.
+It only contains the layout of the sidebar – no song titles, no names.
 
 </details>
 
