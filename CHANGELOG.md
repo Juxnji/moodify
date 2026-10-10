@@ -5,6 +5,15 @@ Which version fits which Spotify version is also listed in [`versions.json`](ver
 
 ---
 
+## [v1.0.2](https://github.com/Juxnji/moodify/releases/tag/v1.0.2) – 2026-10-10
+
+**Tested with:** Spotify 1.3.4 · Spicetify 2.45.3 · Windows 11
+
+### Fixed
+- Now playing sidebar: for songs with a music video, Spotify's extra sections ("Song credits", "On tour", "Similar music videos", artist info) showed up on top of the cover. They're hidden now – only the cover with title and artist remains, like for every other song
+
+---
+
 ## [v1.0.1](https://github.com/Juxnji/moodify/releases/tag/v1.0.1) – 2026-10-10
 
 **Tested with:** Spotify 1.3.4 · Spicetify 2.45.3 · Windows 11

@@ -472,8 +472,11 @@ a[href],
   border-radius: 0 0 13px 13px;
   background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.6));
 }
-/* No song credits/artist info/queue/Spicy Lyrics card */
+/* No song credits/artist info/tour dates/similar music videos/queue/Spicy Lyrics card.
+   Some of these sections contain big titles too (e.g. songs with a music video),
+   so also hide everything that has a section heading. */
 :is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :nth-child(2) > :not(:has(.encore-text-title-small)),
+:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :nth-child(2) > :has(h2, section, #SpicyLyricsNPVCard),
 :is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:nth-child(2) > div > div > :nth-child(n + 3) {
   display: none !important;
 }

@@ -127,7 +127,8 @@ It automatically gets the newest Moodify version that matches your Spotify.
 
 | Moodify | Tested with Spotify | Spicetify | Date |
 |:---:|:---:|:---:|:---:|
-| [**v1.0.1**](https://github.com/Juxnji/moodify/releases/tag/v1.0.1) | 1.3.4 | 2.45.3 | 2026-10-10 |
+| [**v1.0.2**](https://github.com/Juxnji/moodify/releases/tag/v1.0.2) | 1.3.4 | 2.45.3 | 2026-10-10 |
+| [v1.0.1](https://github.com/Juxnji/moodify/releases/tag/v1.0.1) | 1.3.4 | 2.45.3 | 2026-10-10 |
 | [v1.0.0](https://github.com/Juxnji/moodify/releases/tag/v1.0.0) | 1.3.4 | 2.45.3 | 2026-10-10 |
 
 What changed in each version: [**Changelog**](CHANGELOG.md)
@@ -139,7 +140,7 @@ What changed in each version: [**Changelog**](CHANGELOG.md)
 Usually not needed – the installer picks the right one. If you want to anyway:
 
 ```powershell
-$env:MOODIFY_VERSION = "v1.0.1"; iwr -useb https://raw.githubusercontent.com/Juxnji/moodify/main/install.ps1 | iex
+$env:MOODIFY_VERSION = "v1.0.2"; iwr -useb https://raw.githubusercontent.com/Juxnji/moodify/main/install.ps1 | iex
 ```
 
 </details>
