@@ -2,11 +2,18 @@
   "_info": "Which Moodify version fits which Spotify version. Newest first. The installer reads this list and picks the matching version automatically.",
   "versions": [
     {
+      "moodify": "v1.0.4",
+      "date": "2026-10-12",
+      "spotify": ["1.3.4"],
+      "spicetify": "2.45.3",
+      "notes": "Sidebar works with both of Spotify's layouts"
+    },
+    {
       "moodify": "v1.0.3",
       "date": "2026-10-10",
       "spotify": ["1.3.4"],
       "spicetify": "2.45.3",
-      "notes": "Sidebar works with every layout Spotify uses, debug shortcut"
+      "notes": "Sidebar finds cover and title itself, debug shortcut"
     },
     {
       "moodify": "v1.0.2",

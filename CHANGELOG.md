@@ -5,6 +5,20 @@ Which version fits which Spotify version is also listed in [`versions.json`](ver
 
 ---
 
+## [v1.0.4](https://github.com/Juxnji/moodify/releases/tag/v1.0.4) – 2026-10-12
+
+**Tested with:** Spotify 1.3.4 · Spicetify 2.45.3 · Windows 11
+
+### Fixed
+- Now playing sidebar on PCs with Spotify's **other sidebar layout**: Spotify picks one of two layouts per install (one with `NPV_Panel_OpenDiv` / `track-visual-enhancement`, a newer one with `cover-art-slot`). v1.0.3 only understood the newer one, so on some PCs credits, music videos and artist info still showed up. Moodify now recognizes both – the same markers [Spicy Lyrics](https://github.com/Spikerko/spicy-lyrics) and [LiquidMusic](https://github.com/fraustiz/LiquidMusic) use
+- Spotify's dark layers and gradients over cover and video are removed in both layouts
+- The sidebar is detected without relying on the Spotify language
+
+### For developers
+- `tests/npv-layouts.html` rebuilds both layouts (and a video variant) with placeholder content and runs the real theme on them; `tests/run-tests.ps1` checks them in headless Edge
+
+---
+
 ## [v1.0.3](https://github.com/Juxnji/moodify/releases/tag/v1.0.3) – 2026-10-10
 
 **Tested with:** Spotify 1.3.4 · Spicetify 2.45.3 · Windows 11

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en" class="encore-dark-theme">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moodify – sidebar layout test</title>
+<!--
+  Rebuilds the layouts Spotify uses for the "Now playing" sidebar (simplified, with
+  placeholder content) and runs the real theme.js + user.css on them.
+  Open with ?layout=a | b | b-video. The result is written to the data-result attribute of the body.
+    a        – layout with [data-testid="NPV_Panel_OpenDiv"] + track-visual-enhancement
+    b        – newer layout ([data-npv-root]) with [data-testid="cover-art-slot"]
+    b-video  – newer layout with a video instead of the cover
+-->
+<link rel="stylesheet" href="../theme/Moodify/user.css">
+<style>
+  body { margin: 0; background: #0b0b12; color: #fff; font-family: Arial, sans-serif; }
+  .Root { display: flex; gap: 8px; padding: 8px; height: 520px; box-sizing: border-box; }
+  #main-view { flex: 1; border-radius: 8px; }
+  .side { width: 420px; display: flex; }
+  aside { width: 420px; height: 504px; border-radius: 8px; overflow: hidden; }
+  aside > div { height: 100%; display: flex; flex-direction: column; }
+  .scroll { flex: 1; overflow: auto; position: relative; }
+  .card { background: #2a2a2a; border-radius: 8px; padding: 16px; margin-top: 16px; }
+  .about { height: 260px; background: linear-gradient(135deg, #f59e0b, #b91c1c); }
+  .titleRow { display: flex; align-items: center; gap: 8px; padding-top: 12px; }
+  .titleRow > :nth-child(2) { flex: 1; }
+  .encore-text-title-small { font-size: 22px; font-weight: 700; }
+  .os-scrollbar { position: absolute; right: 0; top: 0; width: 8px; height: 100%; background: #f0f; }
+  .dim { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.53); }
+</style>
+<script src="spicetify-stub.js"></script>
+</head>
+<body>
+<div class="Root">
+  <div id="main-view"></div>
+  <div class="side"><div id="slot"></div></div>
+</div>
+
+<template id="layout-a">
+  <aside id="Desktop_PanelContainer_Id" class="NowPlayingView" aria-label="Now playing view">
+    <div>
+      <div class="header" style="height:64px;display:flex;align-items:center;gap:8px;padding:0 16px">
+        <button aria-label="Hide Now Playing view">⟩</button>
+        <div style="flex:1"><a href="/playlist/test"><span>Playlist name</span></a></div>
+        <div><button aria-label="More">…</button><button aria-label="Expand Now Playing view">⤢</button></div>
+      </div>
+      <div class="scroll" data-overlayscrollbars>
+        <div data-overlayscrollbars-viewport>
+          <div style="padding:0 16px 8px">
+            <div data-testid="NPV_Panel_OpenDiv" style="padding-bottom:16px">
+              <div>
+                <div class="grid">
+                  <div style="position:relative;height:388px">
+                    <div data-testid="track-visual-enhancement" style="position:absolute;width:388px;height:388px">
+                      <div><a href="/album/test"><div><img alt="" style="width:388px;height:388px" data-cover></div></a></div>
+                    </div>
+                    <div class="dim"></div>
+                  </div>
+                  <div class="titleRow">
+                    <div data-testid="minimized-track-visual-enhancement"></div>
+                    <div>
+                      <div><span class="encore-text-title-small"><a href="/track/test">Test Song</a></span></div>
+                      <div><a href="/artist/test">Test Artist</a></div>
+                    </div>
+                    <button aria-label="Copy link to Song">🔗</button>
+                    <button aria-label="Hide song">×</button>
+                    <button aria-label="Add to Liked Songs">+</button>
+                  </div>
+                </div>
+              </div>
+              <div class="card"><div><h2>Similar music videos</h2></div><div style="height:120px">video tiles</div></div>
+              <div class="card about"><div><h2>About the artist</h2></div></div>
+              <div class="card"><div><h2>Next in queue</h2></div><div>Next song</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="os-scrollbar"></div>
+      </div>
+    </div>
+  </aside>
+</template>
+
+<template id="layout-b">
+  <aside id="Desktop_PanelContainer_Id" aria-label="Ansicht „Aktueller Titel“" data-npv-root>
+    <div>
+      <div class="header" style="height:64px;display:flex;align-items:center;gap:8px;padding:0 16px">
+        <div><button aria-label="Ansicht „Aktueller Titel“ ausblenden">⟩</button></div>
+        <div style="flex:1"><a href="/playlist/test"><span>Playlist name</span></a></div>
+        <div><button aria-label="Mehr">…</button><button aria-label="Ansicht „Aktueller Titel“ erweitern">⤢</button></div>
+      </div>
+      <div class="scroll" data-overlayscrollbars>
+        <div data-overlayscrollbars-viewport>
+          <div style="padding:64px 16px 12px">
+            <div class="artwork" style="margin-top:0">__ARTWORK__</div>
+            <div>
+              <div style="display:none">Loading · Switch to video</div>
+              <div class="titleRow">
+                <div>
+                  <div><span class="encore-text-title-small"><a href="/track/test">Test Song</a></span></div>
+                  <div><a href="/artist/test">Test Artist</a></div>
+                </div>
+                <div><button aria-label="Zu „Lieblingssongs“ hinzufügen">+</button></div>
+              </div>
+              <div id="SpicyLyricsNPVCard" class="card">Lyrics (Spicy Lyrics card)</div>
+              <div>
+                <section class="card"><div><h2>Songinfos</h2></div><div>Credits</div></section>
+                <div class="card"><div><h2>Auf Tour</h2></div><div>Tour dates</div></div>
+                <div class="card about"><div><h2>Informationen zum*zur Künstler*in</h2></div></div>
+              </div>
+              <div class="card"><div><h2>Nächster Titel in der Warteschlange</h2></div><div>Next song</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="os-scrollbar"></div>
+      </div>
+    </div>
+  </aside>
+</template>
+
+<script>
+  const layout = new URLSearchParams(location.search).get("layout") || "b";
+  let html = document.getElementById(layout === "a" ? "layout-a" : "layout-b").innerHTML;
+  const cover = '<div data-testid="cover-art-slot"><div><div><a href="/album/test"><img alt="" style="width:388px;height:388px" data-cover></a></div></div></div>';
+  const video = '<div><div><div data-canvas-surface><div><video muted data-cover-poster style="width:420px;height:747px"></video></div><div class="dim"></div><div class="dim"></div></div></div></div>';
+  html = html.replace("__ARTWORK__", layout === "b-video" ? video : cover);
+  document.getElementById("slot").outerHTML = html;
+  document.querySelectorAll("[data-cover]").forEach(img => (img.src = window.TEST_COVER));
+  document.querySelectorAll("[data-cover-poster]").forEach(v => (v.poster = window.TEST_COVER));
+</script>
+<script src="../theme/Moodify/theme.js"></script>
+<script>
+  // Report what the theme marked, for automated checks
+  setTimeout(() => {
+    const panel = document.getElementById("Desktop_PanelContainer_Id");
+    const visible = el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden";
+    const texts = [...panel.querySelectorAll("h2, .encore-text-title-small, #SpicyLyricsNPVCard, .os-scrollbar, .dim")].filter(visible).map(el => (el.className || el.id || el.tagName).toString().split(" ")[0] + ":" + el.textContent.trim().slice(0, 30));
+    const r = s => { const e = panel.querySelector(s); if (!e) return "-"; const b = e.getBoundingClientRect(), p = panel.getBoundingClientRect(); return `${Math.round(b.left - p.left)},${Math.round(b.top - p.top)} ${Math.round(b.width)}x${Math.round(b.height)}`; };
+    document.body.setAttribute("data-result", JSON.stringify({
+      layout,
+      panelMarked: panel.getAttribute("data-aura-npv"),
+      visual: r('[data-aura-npv="visual"]'),
+      info: r('[data-aura-npv="info"]'),
+      hidden: panel.querySelectorAll("[data-aura-npv-hide]").length,
+      stillVisible: texts,
+    }));
+  }, 1500);
+</script>
+</body>
+</html>

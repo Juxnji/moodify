@@ -239,68 +239,106 @@
     if (extra && !extra.classList.contains("main-nowPlayingBar-extraControls")) extra.classList.add("main-nowPlayingBar-extraControls");
   }
 
-  // ---------- Now playing sidebar: find the cover/video and the song title ----------
-  // Spotify arranges this sidebar differently depending on the song (music videos, tour
-  // dates, …) and sometimes even the account. Instead of relying on its structure we look
-  // for the cover/video and the song title and mark them; user.css shows only these:
-  //   data-aura-npv="content" – the closest box around image and title
-  //   data-aura-npv="visual"  – the cover or video        data-aura-npv="info" – the title row
+  // >>> npv-marker (tested on its own in tests/npv-layouts.html)
+  // ---------- Now playing sidebar: find the artwork and the song title ----------
+  // Spotify ships (at least) two layouts of this sidebar, picked per install, and the
+  // Spicetify class map doesn't know either of them on Spotify 1.3.3+:
+  //   A) [data-testid="NPV_Panel_OpenDiv"]: artwork in [data-testid="track-visual-enhancement"],
+  //      title row next to it, the section cards (h2 titles) are siblings further up
+  //   B) [data-npv-root]: artwork in [data-testid="cover-art-slot"] or a canvas/video,
+  //      the block below holds the title row, the section cards and "Next in queue"
+  // Both: header, scroll area > … > artwork + title row + cards with an h2 title + queue.
+  // Instead of relying on either structure we look for the artwork and the title and mark
+  // what to keep; user.css shows only these (same idea as Spicy Lyrics and LiquidMusic):
+  //   data-aura-npv="panel"   – the sidebar, once both were found
+  //   data-aura-npv="content" – the closest box around artwork and title
+  //   data-aura-npv="visual"  – the artwork block        data-aura-npv="info" – the title block
   //   data-aura-npv-chain     – wrappers between panel and content (fill the height)
   //   data-aura-npv-hide      – everything else (credits, tour dates, music videos, queue, …)
   const NPV_ATTRS = ["data-aura-npv", "data-aura-npv-hide", "data-aura-npv-chain"];
+  // Most specific first: in layout A the artwork block also contains a canvas video
+  const NPV_ARTWORK = ['[data-testid="track-visual-enhancement"]', '[data-testid="cover-art-slot"]', "[data-canvas-surface]", ".canvasVideoContainerNPV", "video"];
+  const NPV_CARDS = "h2, h3, section, #SpicyLyricsNPVCard";
   const childOf = (parent, el) => { while (el && el.parentElement !== parent) el = el.parentElement; return el; };
 
-  function markNowPlaying() {
-    const panel = document.querySelector("#Desktop_PanelContainer_Id");
+  function findNowPlayingPanel() {
+    return document.querySelector("#Desktop_PanelContainer_Id") || document.querySelector("aside.NowPlayingView, [data-npv-root]");
+  }
+
+  function markNowPlaying(panel, trackName) {
     if (!panel) return;
     const marks = new Map();
     const mark = (el, attr, value = "") => { if (!el) return; if (!marks.has(el)) marks.set(el, {}); marks.get(el)[attr] = value; };
+    const hide = el => mark(el, "data-aura-npv-hide");
 
-    if (/Aktueller Titel|Now playing/i.test(panel.getAttribute("aria-label") || "")) {
-      const inner = panel.firstElementChild;
-      const header = inner?.firstElementChild;
-      const outsideHeader = el => !(header && header.contains(el));
-      const visual = [...panel.querySelectorAll('[data-testid="cover-art-slot"], video')].find(outsideHeader);
-      let title = [...panel.querySelectorAll(".encore-text-title-small")].find(outsideHeader);
-      if (!title) {
-        const name = currentItem()?.name;
-        if (name) title = [...panel.querySelectorAll("a, span, p, div")].find(e => e.children.length === 0 && e.textContent.trim() === name && outsideHeader(e));
-      }
-      if (visual && title) {
-        let content = visual.parentElement;
-        while (content && !content.contains(title)) content = content.parentElement;
-        if (content && content !== panel && panel.contains(content)) {
-          const visualBox = childOf(content, visual);
-          const infoBox = childOf(content, title);
-          mark(content, "data-aura-npv", "content");
-          mark(visualBox, "data-aura-npv", "visual");
-          mark(infoBox, "data-aura-npv", "info");
-          for (const c of content.children) if (c !== visualBox && c !== infoBox) mark(c, "data-aura-npv-hide");
-          // Inside the title box keep only the part with the title (and its buttons)
-          let box = infoBox;
-          while (box && box !== title && (box === infoBox || box.querySelector("h2, h3, section, #SpicyLyricsNPVCard"))) {
-            const keep = childOf(box, title);
-            for (const c of box.children) if (c !== keep) mark(c, "data-aura-npv-hide");
-            box = keep;
-          }
-          for (let n = content.parentElement; n && n !== inner && n !== panel; n = n.parentElement) mark(n, "data-aura-npv-chain");
+    const inner = panel.firstElementChild;
+    const header = inner && inner.children.length > 1 ? inner.firstElementChild : null;
+    const usable = el => !(header && header.contains(el));
+    let visual = null;
+    for (const selector of NPV_ARTWORK) {
+      visual = [...panel.querySelectorAll(selector)].find(usable);
+      if (visual) break;
+    }
+    // The song title: Spotify's title text style, else an element showing exactly the track name
+    let title = [...panel.querySelectorAll(".encore-text-title-small")].find(el => usable(el) && !(visual && visual.contains(el)) && !el.closest(NPV_CARDS));
+    if (!title && trackName) {
+      title = [...panel.querySelectorAll("a, span, p, div")].find(el => el.children.length === 0 && el.textContent.trim() === trackName && usable(el) && !(visual && visual.contains(el)));
+    }
+
+    if (visual && title) {
+      let content = visual.parentElement;
+      while (content && !content.contains(title)) content = content.parentElement;
+      if (content && content !== panel && content !== inner && panel.contains(content)) {
+        const visualBox = childOf(content, visual);
+        const infoBox = childOf(content, title);
+        mark(panel, "data-aura-npv", "panel");
+        mark(content, "data-aura-npv", "content");
+        mark(visualBox, "data-aura-npv", "visual");
+        mark(infoBox, "data-aura-npv", "info");
+        for (const c of content.children) if (c !== visualBox && c !== infoBox) hide(c);
+
+        // Artwork block: keep only the way down to the artwork (or the video inside it) –
+        // drops Spotify's dimming layers and gradients that sit next to it
+        const media = visual.matches("video") ? visual : visual.querySelector("video") || visual;
+        for (let box = visualBox; box && box !== media; ) {
+          const keep = childOf(box, media);
+          for (const c of box.children) if (c !== keep) hide(c);
+          box = keep;
+        }
+
+        // Title block: the largest box around the title without any section card in it
+        // (keeps the title, the artists and the ×/+ buttons together)
+        let titleBlock = title;
+        while (titleBlock.parentElement && titleBlock !== infoBox && !titleBlock.parentElement.querySelector(NPV_CARDS)) titleBlock = titleBlock.parentElement;
+        for (let box = infoBox; box && box !== titleBlock && box !== title; ) {
+          const keep = childOf(box, title);
+          for (const c of box.children) if (c !== keep) hide(c);
+          box = keep;
+        }
+
+        // Wrappers up to the scroll area: fill the height, hide what sits next to them
+        // (section cards in layout A, scrollbars) – but never the header
+        for (let n = content; n.parentElement && n.parentElement !== inner && n.parentElement !== panel; n = n.parentElement) {
+          mark(n.parentElement, "data-aura-npv-chain");
+          for (const c of n.parentElement.children) if (c !== n) hide(c);
         }
       }
     }
 
     // Only touch attributes that actually change
-    for (const el of panel.querySelectorAll("[data-aura-npv], [data-aura-npv-hide], [data-aura-npv-chain]")) {
+    for (const el of [panel, ...panel.querySelectorAll("[data-aura-npv], [data-aura-npv-hide], [data-aura-npv-chain]")]) {
       const want = marks.get(el) || {};
       for (const a of NPV_ATTRS) if (!(a in want) && el.hasAttribute(a)) el.removeAttribute(a);
     }
     for (const [el, want] of marks) for (const [a, v] of Object.entries(want)) if (el.getAttribute(a) !== v) el.setAttribute(a, v);
   }
+  // <<< npv-marker
 
   // ---------- Debug info for bug reports (Ctrl+Alt+Shift+M) ----------
   // Copies the layout of the now playing sidebar (element types, sizes, Spotify's
   // internal names – no song titles, no names) so problems can be fixed remotely.
   function debugInfo() {
-    const panel = document.querySelector("#Desktop_PanelContainer_Id");
+    const panel = findNowPlayingPanel();
     const version = Spicetify.Platform?.PlatformData?.client_version_triple || Spicetify.Platform?.version || "?";
     const lines = [`Moodify debug · Spotify ${version} · panel: ${panel ? "found" : "missing"}`];
     const walk = (el, depth) => {
@@ -340,12 +378,12 @@
     requestAnimationFrame(() => {
       domQueued = false;
       compatBridge();
-      markNowPlaying();
+      markNowPlaying(findNowPlayingPanel(), currentItem()?.name);
       if (root.getAttribute("data-aura-page") === "home") processRecents();
     });
   }).observe(document.body, { childList: true, subtree: true });
   compatBridge();
-  markNowPlaying();
+  markNowPlaying(findNowPlayingPanel(), currentItem()?.name);
 
   // ---------- Remember the current page (for the tidied-up home page) ----------
   const setPage = loc => {

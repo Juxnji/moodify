@@ -359,7 +359,7 @@ a[href],
   display: none !important;
 }
 
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div {
+[data-aura-npv="panel"] > div {
   position: relative;
   display: flex !important;
   flex-direction: column !important;
@@ -367,7 +367,7 @@ a[href],
 }
 
 /* Header floats on top instead of taking 64px of space, without a glass bar behind it */
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:first-child {
+[data-aura-npv="panel"] > div > div:first-child {
   position: absolute !important;
   top: 0;
   left: 0;
@@ -377,25 +377,25 @@ a[href],
   background: transparent !important;
   backdrop-filter: none !important;
 }
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:first-child :is(*, *::before),
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:first-child::before {
+[data-aura-npv="panel"] > div > div:first-child :is(*, *::before),
+[data-aura-npv="panel"] > div > div:first-child::before {
   backdrop-filter: none !important;
 }
 /* Collapse button only on hover */
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:first-child button {
+[data-aura-npv="panel"] > div > div:first-child button {
   pointer-events: auto;
   opacity: 0;
   transition: opacity 0.2s ease;
 }
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]):hover > div > div:first-child button {
+[data-aura-npv="panel"]:hover > div > div:first-child button {
   opacity: 1;
 }
 /* Don't show which playlist/album is playing */
-:is(#Desktop_PanelContainer_Id[aria-label*="Aktueller Titel"], #Desktop_PanelContainer_Id[aria-label*="Now playing"]) > div > div:first-child a {
+[data-aura-npv="panel"] > div > div:first-child a {
   visibility: hidden !important;
 }
 /* "More", "Expand" and "Copy link" stay hidden */
-#Desktop_PanelContainer_Id button:is([aria-label="Mehr"], [aria-label="More"], [aria-label*="erweitern"], [aria-label*="Expand"], [aria-label="Link zum Song kopieren"], [aria-label="Copy link to Song"]) {
+[data-aura-npv="panel"] button:is([aria-label="Mehr"], [aria-label="More"], [aria-label*="erweitern"], [aria-label*="Expand"], [aria-label="Link zum Song kopieren"], [aria-label="Copy link to Song"]) {
   display: none !important;
 }
 
@@ -405,24 +405,27 @@ a[href],
    content = frame of reference for image/video and title
    visual  = the cover or video        info = the song title row
    data-aura-npv-hide = everything else (credits, tour dates, music videos, queue, lyrics card …) */
-#Desktop_PanelContainer_Id [data-aura-npv-chain] {
+[data-aura-npv="panel"] [data-aura-npv-chain] {
   flex: 1 1 auto !important;
   min-height: 0 !important;
   height: 100% !important;
+  max-height: none !important;
   overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
-#Desktop_PanelContainer_Id [data-aura-npv="content"] {
+[data-aura-npv="panel"] [data-aura-npv="content"] {
   position: relative !important;
   height: 100% !important;
   min-height: 0 !important;
   padding: 0 !important;
 }
-#Desktop_PanelContainer_Id [data-aura-npv-hide] {
+[data-aura-npv="panel"] [data-aura-npv-hide] {
   display: none !important;
 }
 
 /* --- Image or video: fills the whole sidebar --- */
-#Desktop_PanelContainer_Id [data-aura-npv="visual"] {
+[data-aura-npv="panel"] [data-aura-npv="visual"] {
   position: absolute !important;
   inset: 0 !important;
   width: auto !important;
@@ -432,34 +435,34 @@ a[href],
   overflow: hidden;
   border-radius: 13px;
 }
-#Desktop_PanelContainer_Id [data-aura-npv="visual"] :is(div, a, img, video) {
+[data-aura-npv="panel"] [data-aura-npv="visual"] :is(div, a, img, video) {
   width: 100% !important;
   height: 100% !important;
   max-width: none !important;
   margin: 0 !important;
   aspect-ratio: auto !important;
 }
-#Desktop_PanelContainer_Id [data-aura-npv="visual"] :is(img, video) {
+[data-aura-npv="panel"] [data-aura-npv="visual"] :is(img, video) {
   object-fit: cover !important;
   border-radius: 0 !important;
 }
-#Desktop_PanelContainer_Id div:has(> div > div > video) {
+[data-aura-npv="panel"] div:has(> div > div > video) {
   inset: 0 !important;
 }
 /* Always bright: Spotify dims the video (65 % brightness) and fades it to black at the top/bottom */
-#Desktop_PanelContainer_Id video {
+[data-aura-npv="panel"] video {
   filter: none !important;
   opacity: 1 !important;
   -webkit-mask-image: none !important;
   mask-image: none !important;
 }
-#Desktop_PanelContainer_Id div:has(> div > video) ~ div,
-#Desktop_PanelContainer_Id div:has(> div > div > video) > div:not(:has(video)) {
+[data-aura-npv="panel"] div:has(> div > video) ~ div,
+[data-aura-npv="panel"] div:has(> div > div > video) > div:not(:has(video)) {
   display: none !important;
 }
 
 /* --- Bottom: only song title + artist, on top of the image --- */
-#Desktop_PanelContainer_Id [data-aura-npv="info"] {
+[data-aura-npv="panel"] [data-aura-npv="info"] {
   position: absolute !important;
   left: 16px;
   right: 16px;
@@ -469,7 +472,7 @@ a[href],
   margin: 0 !important;
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
 }
-#Desktop_PanelContainer_Id [data-aura-npv="content"]::after {
+[data-aura-npv="panel"] [data-aura-npv="content"]::after {
   content: "";
   position: absolute;
   inset: auto 0 0 0;
@@ -480,10 +483,10 @@ a[href],
   background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.6));
 }
 /* X / + next to the song title only on hover */
-#Desktop_PanelContainer_Id [data-aura-npv="info"] button {
+[data-aura-npv="panel"] [data-aura-npv="info"] button {
   opacity: 0 !important;
   transition: opacity 0.25s ease !important;
 }
-#Desktop_PanelContainer_Id:hover [data-aura-npv="info"] button {
+[data-aura-npv="panel"]:hover [data-aura-npv="info"] button {
   opacity: 1 !important;
 }
