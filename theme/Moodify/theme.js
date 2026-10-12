@@ -254,8 +254,9 @@
   //   data-aura-npv="content" – the closest box around artwork and title
   //   data-aura-npv="visual"  – the artwork block        data-aura-npv="info" – the title block
   //   data-aura-npv-chain     – wrappers between panel and content (fill the height)
+  //   data-aura-npv-fill      – every box from the artwork block down to the picture (stretched)
   //   data-aura-npv-hide      – everything else (credits, tour dates, music videos, queue, …)
-  const NPV_ATTRS = ["data-aura-npv", "data-aura-npv-hide", "data-aura-npv-chain"];
+  const NPV_ATTRS = ["data-aura-npv", "data-aura-npv-hide", "data-aura-npv-chain", "data-aura-npv-fill"];
   // Most specific first: in layout A the artwork block also contains a canvas video
   const NPV_ARTWORK = ['[data-testid="track-visual-enhancement"]', '[data-testid="cover-art-slot"]', "[data-canvas-surface]", ".canvasVideoContainerNPV", "video"];
   const NPV_CARDS = "h2, h3, section, #SpicyLyricsNPVCard";
@@ -297,12 +298,14 @@
         mark(infoBox, "data-aura-npv", "info");
         for (const c of content.children) if (c !== visualBox && c !== infoBox) hide(c);
 
-        // Artwork block: keep only the way down to the artwork (or the video inside it) –
-        // drops Spotify's dimming layers and gradients that sit next to it
-        const media = visual.matches("video") ? visual : visual.querySelector("video") || visual;
+        // Artwork block: keep only the way down to the picture (video, else the cover image) –
+        // drops Spotify's dimming layers and gradients next to it – and mark every box on
+        // that way so user.css can stretch it, whatever size Spotify gave it
+        const media = visual.matches("video, img") ? visual : visual.querySelector("video") || visual.querySelector("img") || visual;
         for (let box = visualBox; box && box !== media; ) {
           const keep = childOf(box, media);
           for (const c of box.children) if (c !== keep) hide(c);
+          mark(keep, "data-aura-npv-fill");
           box = keep;
         }
 
@@ -326,7 +329,7 @@
     }
 
     // Only touch attributes that actually change
-    for (const el of [panel, ...panel.querySelectorAll("[data-aura-npv], [data-aura-npv-hide], [data-aura-npv-chain]")]) {
+    for (const el of [panel, ...panel.querySelectorAll("[data-aura-npv], [data-aura-npv-hide], [data-aura-npv-chain], [data-aura-npv-fill]")]) {
       const want = marks.get(el) || {};
       for (const a of NPV_ATTRS) if (!(a in want) && el.hasAttribute(a)) el.removeAttribute(a);
     }

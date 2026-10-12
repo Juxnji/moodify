@@ -5,6 +5,15 @@ Which version fits which Spotify version is also listed in [`versions.json`](ver
 
 ---
 
+## [v1.0.5](https://github.com/Juxnji/moodify/releases/tag/v1.0.5) – 2026-10-12
+
+**Tested with:** Spotify 1.3.4 · Spicetify 2.45.3 · Windows 11
+
+### Fixed
+- Now playing sidebar, older layout: the cover stayed a square at the top with a dark area below, because Spotify wraps it in extra boxes with a fixed size. Moodify now marks every box on the way down to the picture and stretches it, so the cover (or video) fills the whole sidebar in both layouts
+
+---
+
 ## [v1.0.4](https://github.com/Juxnji/moodify/releases/tag/v1.0.4) – 2026-10-12
 
 **Tested with:** Spotify 1.3.4 · Spicetify 2.45.3 · Windows 11

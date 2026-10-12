@@ -53,7 +53,7 @@
                 <div class="grid">
                   <div style="position:relative;height:388px">
                     <div data-testid="track-visual-enhancement" style="position:absolute;width:388px;height:388px">
-                      <div><a href="/album/test"><div><img alt="" style="width:388px;height:388px" data-cover></div></a></div>
+                      <div><a href="/album/test"><button data-testid="cover-drop-target" style="display:block;aspect-ratio:1;max-height:280px;width:280px;padding:0;border:0"><figure style="margin:0;width:280px;height:280px"><img alt="" style="width:280px;height:280px;object-fit:contain" data-cover></figure></button></a></div>
                     </div>
                     <div class="dim"></div>
                   </div>
@@ -139,7 +139,9 @@
     document.body.setAttribute("data-result", JSON.stringify({
       layout,
       panelMarked: panel.getAttribute("data-aura-npv"),
+      panel: `${Math.round(panel.getBoundingClientRect().width)}x${Math.round(panel.getBoundingClientRect().height)}`,
       visual: r('[data-aura-npv="visual"]'),
+      image: r(layout === "b-video" ? "video" : "img[data-cover]"),
       info: r('[data-aura-npv="info"]'),
       hidden: panel.querySelectorAll("[data-aura-npv-hide]").length,
       stillVisible: texts,

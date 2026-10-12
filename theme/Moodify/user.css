@@ -435,19 +435,26 @@ a[href],
   overflow: hidden;
   border-radius: 13px;
 }
-[data-aura-npv="panel"] [data-aura-npv="visual"] :is(div, a, img, video) {
+/* Every box on the way down to the picture (marked by theme.js) is stretched over the
+   whole sidebar – whatever kind of box it is and whatever size Spotify gave it */
+[data-aura-npv="panel"] [data-aura-npv-fill] {
+  position: absolute !important;
+  inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
   max-width: none !important;
+  max-height: none !important;
   margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  transform: none !important;
   aspect-ratio: auto !important;
 }
 [data-aura-npv="panel"] [data-aura-npv="visual"] :is(img, video) {
   object-fit: cover !important;
   border-radius: 0 !important;
-}
-[data-aura-npv="panel"] div:has(> div > div > video) {
-  inset: 0 !important;
 }
 /* Always bright: Spotify dims the video (65 % brightness) and fades it to black at the top/bottom */
 [data-aura-npv="panel"] video {
