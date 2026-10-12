@@ -136,7 +136,10 @@ function Install-Moodify {
         } catch { }
     }
     & $spicetify config | Out-Null          # creates the config if it doesn't exist yet
-    $userdata = (& $spicetify path userdata | Select-Object -Last 1).Trim()
+    # Spicetify's settings folder: only trust an answer that is a real folder
+    $userdata = Join-Path $env:APPDATA "spicetify"
+    $answerPath = & $spicetify path userdata 2>$null | ForEach-Object { "$_".Trim() } | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Container -ErrorAction SilentlyContinue) } | Select-Object -Last 1
+    if ($answerPath) { $userdata = $answerPath }
     Write-Ok "Spicetify is ready"
 
     # --- 4. Download Moodify -----------------------------------------------

@@ -14,6 +14,11 @@ Which version fits which Spotify version is also listed in [`versions.json`](ver
 - Spotify's dark layers and gradients over cover and video are removed in both layouts
 - The sidebar is detected without relying on the Spotify language
 
+### Uninstall
+- Now deletes everything Moodify installed (theme, extensions, patched Marketplace) and removes it from Spicetify's settings – other themes and extensions stay
+- Asks at the end whether Spicetify should be removed completely as well
+- Installer and uninstaller no longer trip over error messages from Spicetify when looking up its settings folder
+
 ### For developers
 - `tests/npv-layouts.html` rebuilds both layouts (and a video variant) with placeholder content and runs the real theme on them; `tests/run-tests.ps1` checks them in headless Edge
 

@@ -236,7 +236,13 @@ but in practice Spotify hardly acts against it. Use at your own risk.
 iwr -useb https://raw.githubusercontent.com/Juxnji/moodify/main/uninstall.ps1 | iex
 ```
 
-Spotify goes back to looking completely normal.
+This restores the normal Spotify and **deletes everything Moodify installed** – the theme, the extensions
+(Spicy Lyrics, Volume Percentage, Play Next) and the patched Marketplace. Other themes or extensions you
+installed yourself stay untouched.
+
+At the end it asks whether **Spicetify** should be removed as well:
+- **N** (default) – Spicetify stays, e.g. if you use other themes
+- **Y** – Spicetify is deleted completely too, no leftovers
 
 ---
 
