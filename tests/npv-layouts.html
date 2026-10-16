@@ -7,10 +7,14 @@
 <!--
   Rebuilds the layouts Spotify uses for the "Now playing" sidebar (simplified, with
   placeholder content) and runs the real theme.js + user.css on them.
-  Open with ?layout=a | b | b-video. The result is written to the data-result attribute of the body.
-    a        – layout with [data-testid="NPV_Panel_OpenDiv"] + track-visual-enhancement
-    b        – newer layout ([data-npv-root]) with [data-testid="cover-art-slot"]
-    b-video  – newer layout with a video instead of the cover
+  Open with ?layout=a | a-canvas | b | b-video | b-related | queue.
+  The result is written to the data-result attribute of the body.
+    a          – older layout ([data-testid="NPV_Panel_OpenDiv"] + track-visual-enhancement)
+    a-canvas   – older layout with a playing Canvas/music video, cover made invisible by Spotify
+    b          – newer layout ([data-npv-root]) with [data-testid="cover-art-slot"]
+    b-video    – newer layout with a playing video instead of the cover
+    b-related  – newer layout, cover + a playing video inside a section card (must be ignored)
+    queue      – a different panel in the same place (must be left alone)
 -->
 <link rel="stylesheet" href="../theme/Moodify/user.css">
 <style>
@@ -52,9 +56,10 @@
               <div>
                 <div class="grid">
                   <div style="position:relative;height:388px">
-                    <div data-testid="track-visual-enhancement" style="position:absolute;width:388px;height:388px">
+                    <div data-testid="track-visual-enhancement" style="position:absolute;aspect-ratio:1/1;width:388px;__COVER_STATE__">
                       <div><a href="/album/test"><button data-testid="cover-drop-target" style="display:block;aspect-ratio:1;max-height:280px;width:280px;padding:0;border:0"><figure style="margin:0;width:280px;height:280px"><img alt="" style="width:280px;height:280px;object-fit:contain" data-cover></figure></button></a></div>
                     </div>
+                    __CANVAS_A__
                     <div class="dim"></div>
                   </div>
                   <div class="titleRow">
@@ -120,33 +125,51 @@
 
 <script>
   const layout = new URLSearchParams(location.search).get("layout") || "b";
-  let html = document.getElementById(layout === "a" ? "layout-a" : "layout-b").innerHTML;
+  let html = document.getElementById(layout.startsWith("a") ? "layout-a" : "layout-b").innerHTML;
   const cover = '<div data-testid="cover-art-slot"><div><div><a href="/album/test"><img alt="" style="width:388px;height:388px" data-cover></a></div></div></div>';
-  const video = '<div><div><div data-canvas-surface><div><video muted data-cover-poster style="width:420px;height:747px"></video></div><div class="dim"></div><div class="dim"></div></div></div></div>';
+  const video = '<div><div><div data-canvas-surface><div><video muted data-play style="width:420px;height:747px"></video></div><div class="dim"></div><div class="dim"></div></div></div></div>';
   html = html.replace("__ARTWORK__", layout === "b-video" ? video : cover);
+  // a-canvas: older layout with a Canvas / music video – Spotify makes the cover invisible
+  // and shows the video in its own square box next to it
+  const canvasA = '<div style="position:absolute;inset:0"><div><div class="canvasVideoContainerNPV" style="width:388px;aspect-ratio:1/1"><video muted data-play style="width:100%;height:100%;object-fit:cover"></video></div></div></div>';
+  html = html.replace("__CANVAS_A__", layout === "a-canvas" ? canvasA : "");
+  html = html.replace("__COVER_STATE__", layout === "a-canvas" ? "opacity:0;visibility:hidden" : "");
+  // b-related: a playing video inside a "Similar music videos" card – must NOT end up in the card
+  if (layout === "b-related") html = html.replace("<div>Credits</div>", '<div>Credits<video muted data-play style="width:300px;height:170px"></video></div>');
+  // queue: another panel in the same place (queue) – Moodify must leave it alone
+  if (layout === "queue") html = '<aside id="Desktop_PanelContainer_Id" aria-label="Warteschlange"><div style="padding:16px"><h2>Warteschlange</h2><div>Next song</div></div></aside>';
   document.getElementById("slot").outerHTML = html;
   document.querySelectorAll("[data-cover]").forEach(img => (img.src = window.TEST_COVER));
-  document.querySelectorAll("[data-cover-poster]").forEach(v => (v.poster = window.TEST_COVER));
+  // Playing test videos: an animated canvas streamed into the <video>
+  document.querySelectorAll("video[data-play]").forEach((v, n) => {
+    const c = document.createElement("canvas"); c.width = 320; c.height = 568;
+    const ctx = c.getContext("2d"); let t = 0;
+    (function paint() { t++; ctx.fillStyle = n ? "#d97706" : `hsl(${(t * 3) % 360} 80% 50%)`; ctx.fillRect(0, 0, 320, 568); ctx.fillStyle = "#fff"; ctx.font = "bold 42px Arial"; ctx.fillText(n ? "WRONG VIDEO" : "VIDEO", 70, 300); requestAnimationFrame(paint); })();
+    v.srcObject = c.captureStream(30); v.play();
+  });
 </script>
 <script src="../theme/Moodify/theme.js"></script>
 <script>
-  // Report what the theme marked, for automated checks
+  // Report what Moodify did, for automated checks
   setTimeout(() => {
     const panel = document.getElementById("Desktop_PanelContainer_Id");
-    const visible = el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden";
-    const texts = [...panel.querySelectorAll("h2, .encore-text-title-small, #SpicyLyricsNPVCard, .os-scrollbar, .dim")].filter(visible).map(el => (el.className || el.id || el.tagName).toString().split(" ")[0] + ":" + el.textContent.trim().slice(0, 30));
-    const r = s => { const e = panel.querySelector(s); if (!e) return "-"; const b = e.getBoundingClientRect(), p = panel.getBoundingClientRect(); return `${Math.round(b.left - p.left)},${Math.round(b.top - p.top)} ${Math.round(b.width)}x${Math.round(b.height)}`; };
+    const card = document.getElementById("moodify-npv");
+    const rect = e => { if (!e) return "-"; const b = e.getBoundingClientRect(), p = panel.getBoundingClientRect(); return `${Math.round(b.left - p.left)},${Math.round(b.top - p.top)} ${Math.round(b.width)}x${Math.round(b.height)}`; };
+    const spotifyStillVisible = [...panel.children].filter(c => c !== card && getComputedStyle(c).opacity !== "0").length;
+    let videoPixel = "-";
+    if (card) { try { const cv = card.querySelector(".mnpv-video"); const d = cv.getContext("2d").getImageData(Math.floor(cv.width / 2), Math.floor(cv.height / 4), 1, 1).data; videoPixel = `${d[0]},${d[1]},${d[2]},${d[3]}`; } catch (e) { videoPixel = "err"; } }
     document.body.setAttribute("data-result", JSON.stringify({
       layout,
-      panelMarked: panel.getAttribute("data-aura-npv"),
-      panel: `${Math.round(panel.getBoundingClientRect().width)}x${Math.round(panel.getBoundingClientRect().height)}`,
-      visual: r('[data-aura-npv="visual"]'),
-      image: r(layout === "b-video" ? "video" : "img[data-cover]"),
-      info: r('[data-aura-npv="info"]'),
-      hidden: panel.querySelectorAll("[data-aura-npv-hide]").length,
-      stillVisible: texts,
+      panel: rect(panel),
+      card: rect(card),
+      mode: card?.getAttribute("data-mode") || "none",
+      title: card?.querySelector(".mnpv-title")?.textContent || "",
+      artists: card?.querySelector(".mnpv-artists")?.textContent || "",
+      cover: !!card?.querySelector(".mnpv-cover.visible"),
+      videoPixel,
+      spotifyStillVisible,
     }));
-  }, 1500);
+  }, 2500);
 </script>
 </body>
 </html>

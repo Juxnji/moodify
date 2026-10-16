@@ -348,152 +348,157 @@ a[href],
   opacity: 0 !important;
 }
 
-/* ---------- Right sidebar ("Now playing view") – layout from Spotify 1.3.4 ----------
-   The cover or video always fills the whole sidebar (whatever the window size),
-   song title + artist sit on top of it at the bottom. Fixed, no scrolling.
-   Spotify barely uses stable class names here and arranges the sidebar differently
-   depending on the song, so theme.js finds and marks the parts (data-aura-npv). */
-
-/* Spicy Lyrics paints its own colorful background into the sidebar – we already have ours */
+/* ---------- Right sidebar ("Now playing view"): Moodify's own card ----------
+   Spotify builds this sidebar differently on every PC and changes it with nearly every
+   update, so theme.js draws its own card on top (#moodify-npv): cover or the video Spotify
+   plays, title, artists, like button. Spotify's sidebar stays underneath, invisible but
+   working (its videos keep playing and get mirrored into the card). */
+[data-moodify-npv] {
+  position: relative !important;
+}
+[data-moodify-npv] > :not(#moodify-npv) {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
 #Desktop_PanelContainer_Id canvas.spicy-dynamic-bg {
   display: none !important;
 }
 
-[data-aura-npv="panel"] > div {
-  position: relative;
-  display: flex !important;
-  flex-direction: column !important;
-  height: 100% !important;
-}
-
-/* Header floats on top instead of taking 64px of space, without a glass bar behind it */
-[data-aura-npv="panel"] > div > div:first-child {
-  position: absolute !important;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 3;
-  pointer-events: none;
-  background: transparent !important;
-  backdrop-filter: none !important;
-}
-[data-aura-npv="panel"] > div > div:first-child :is(*, *::before),
-[data-aura-npv="panel"] > div > div:first-child::before {
-  backdrop-filter: none !important;
-}
-/* Collapse button only on hover */
-[data-aura-npv="panel"] > div > div:first-child button {
-  pointer-events: auto;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-[data-aura-npv="panel"]:hover > div > div:first-child button {
-  opacity: 1;
-}
-/* Don't show which playlist/album is playing */
-[data-aura-npv="panel"] > div > div:first-child a {
-  visibility: hidden !important;
-}
-/* "More", "Expand" and "Copy link" stay hidden */
-[data-aura-npv="panel"] button:is([aria-label="Mehr"], [aria-label="More"], [aria-label*="erweitern"], [aria-label*="Expand"], [aria-label="Link zum Song kopieren"], [aria-label="Copy link to Song"]) {
-  display: none !important;
-}
-
-/* The parts below are found and marked by theme.js (see markNowPlaying there),
-   so this works no matter how Spotify nests them:
-   chain   = wrappers between the panel and the content – fill the height, no scrolling
-   content = frame of reference for image/video and title
-   visual  = the cover or video        info = the song title row
-   data-aura-npv-hide = everything else (credits, tour dates, music videos, queue, lyrics card …) */
-[data-aura-npv="panel"] [data-aura-npv-chain] {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  height: 100% !important;
-  max-height: none !important;
-  overflow: hidden !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-[data-aura-npv="panel"] [data-aura-npv="content"] {
-  position: relative !important;
-  height: 100% !important;
-  min-height: 0 !important;
-  padding: 0 !important;
-}
-[data-aura-npv="panel"] [data-aura-npv-hide] {
-  display: none !important;
-}
-
-/* --- Image or video: fills the whole sidebar --- */
-[data-aura-npv="panel"] [data-aura-npv="visual"] {
-  position: absolute !important;
-  inset: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  margin: 0 !important;
-  padding: 0 !important;
+#moodify-npv {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
   overflow: hidden;
   border-radius: 13px;
+  background: #0d0d10;
+  color: #fff;
+  font-family: "Outfit", "SpotifyMixUI", "CircularSp", sans-serif;
+  pointer-events: auto;
+  transition: box-shadow 0.35s var(--aura-ease);
 }
-/* Every box on the way down to the picture (marked by theme.js) is stretched over the
-   whole sidebar – whatever kind of box it is and whatever size Spotify gave it */
-[data-aura-npv="panel"] [data-aura-npv-fill] {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
-  max-width: none !important;
-  max-height: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  transform: none !important;
-  aspect-ratio: auto !important;
-}
-[data-aura-npv="panel"] [data-aura-npv="visual"] :is(img, video) {
-  object-fit: cover !important;
-  border-radius: 0 !important;
-}
-/* Always bright: Spotify dims the video (65 % brightness) and fades it to black at the top/bottom */
-[data-aura-npv="panel"] video {
-  filter: none !important;
-  opacity: 1 !important;
-  -webkit-mask-image: none !important;
-  mask-image: none !important;
-}
-[data-aura-npv="panel"] div:has(> div > video) ~ div,
-[data-aura-npv="panel"] div:has(> div > div > video) > div:not(:has(video)) {
-  display: none !important;
+/* Glow in the album color on hover – on the card itself, so it works with every layout */
+#moodify-npv:hover {
+  box-shadow: inset 0 0 0 1px rgba(var(--aura-accent-rgb), 0.6), inset 0 0 26px rgba(var(--aura-accent-rgb), 0.35);
 }
 
-/* --- Bottom: only song title + artist, on top of the image --- */
-[data-aura-npv="panel"] [data-aura-npv="info"] {
-  position: absolute !important;
-  left: 16px;
-  right: 16px;
-  bottom: 14px;
-  z-index: 2;
-  height: auto !important;
-  margin: 0 !important;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
+/* Picture: two cover layers for a soft cross-fade, the mirrored video on top */
+#moodify-npv .mnpv-media,
+#moodify-npv .mnpv-cover,
+#moodify-npv .mnpv-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
-[data-aura-npv="panel"] [data-aura-npv="content"]::after {
-  content: "";
+#moodify-npv .mnpv-cover {
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+#moodify-npv .mnpv-cover.visible {
+  opacity: 1;
+}
+#moodify-npv .mnpv-video {
+  display: block;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+#moodify-npv[data-mode="video"] .mnpv-video {
+  opacity: 1;
+}
+
+/* Shadow at the bottom so the title stays readable on bright covers */
+#moodify-npv .mnpv-shade {
   position: absolute;
   inset: auto 0 0 0;
-  height: 38%;
-  z-index: 1;
+  height: 42%;
   pointer-events: none;
-  border-radius: 0 0 13px 13px;
-  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.6));
+  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.62));
 }
-/* X / + next to the song title only on hover */
-[data-aura-npv="panel"] [data-aura-npv="info"] button {
-  opacity: 0 !important;
-  transition: opacity 0.25s ease !important;
+
+/* Title, artists and the like button at the bottom */
+#moodify-npv .mnpv-info {
+  position: absolute;
+  left: 16px;
+  right: 10px;
+  bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
 }
-[data-aura-npv="panel"]:hover [data-aura-npv="info"] button {
-  opacity: 1 !important;
+#moodify-npv .mnpv-text {
+  flex: 1;
+  min-width: 0;
+}
+#moodify-npv .mnpv-title,
+#moodify-npv .mnpv-artists {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#moodify-npv .mnpv-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+}
+#moodify-npv .mnpv-artists {
+  margin-top: 2px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.78);
+}
+#moodify-npv .mnpv-artists a {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+#moodify-npv .mnpv-title:hover,
+#moodify-npv .mnpv-artists a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* Buttons only show up on hover */
+#moodify-npv button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s var(--aura-ease), color 0.2s ease;
+}
+#moodify-npv button svg {
+  width: 18px;
+  height: 18px;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6));
+}
+#moodify-npv:hover button {
+  opacity: 0.85;
+}
+#moodify-npv button:hover {
+  opacity: 1;
+  transform: scale(1.08);
+}
+#moodify-npv .mnpv-like {
+  flex: 0 0 auto;
+}
+#moodify-npv .mnpv-like[aria-checked="true"] {
+  color: var(--aura-accent);
+}
+#moodify-npv .mnpv-collapse {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
 }

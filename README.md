@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/Juxnji/moodify/releases/latest"><img src="https://img.shields.io/github/v/release/Juxnji/moodify?style=for-the-badge&color=a855f7&label=Moodify" alt="Latest release"></a>
-  <img src="https://img.shields.io/badge/Spotify-1.3.4-1DB954?style=for-the-badge&logo=spotify&logoColor=white" alt="Tested with Spotify 1.3.4">
+  <img src="https://img.shields.io/badge/Spotify-1.3.4%20%7C%201.3.5-1DB954?style=for-the-badge&logo=spotify&logoColor=white" alt="Tested with Spotify 1.3.4 and 1.3.5">
   <img src="https://img.shields.io/badge/Spicetify-2.45.3-ff4d8d?style=for-the-badge" alt="Tested with Spicetify 2.45.3">
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 10 and 11">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge" alt="MIT License"></a>
@@ -46,7 +46,7 @@
 | 🧊 **Frosted glass** | Translucent panels with rounded corners and the modern *Outfit* font |
 | ✨ **Glow** | Buttons glow on hover, the sidebar lights up in the album color |
 | 🏠 **Clean home page** | Only "Recents" (or "Jump back in") as a fixed 2 × 4 grid – hide single tiles with **×** |
-| 🎬 **Now playing sidebar** | The cover or song video fills the whole sidebar with the title on top – fixed, no scrolling |
+| 🎬 **Now playing card** | Moodify's own card in the right sidebar – cover or the song's video, title, artists, like button. **Looks the same on every PC**, whatever layout Spotify uses |
 | 🛒 **Marketplace included** | Patched for new Spotify versions: the *Themes · Snippets · Apps* tabs are back |
 | 🎤 **Extras** | [Spicy Lyrics](https://github.com/Spikerko/spicy-lyrics) (karaoke-style lyrics), volume in %, "Play next" |
 | 🔢 **Right version, automatically** | The installer detects your Spotify version and picks the Moodify version that matches |
@@ -127,7 +127,8 @@ It automatically gets the newest Moodify version that matches your Spotify.
 
 | Moodify | Tested with Spotify | Spicetify | Date |
 |:---:|:---:|:---:|:---:|
-| [**v1.0.5**](https://github.com/Juxnji/moodify/releases/tag/v1.0.5) | 1.3.4 | 2.45.3 | 2026-10-12 |
+| [**v1.1.0**](https://github.com/Juxnji/moodify/releases/tag/v1.1.0) | 1.3.4, 1.3.5 | 2.45.3 | 2026-10-16 |
+| [v1.0.5](https://github.com/Juxnji/moodify/releases/tag/v1.0.5) | 1.3.4 | 2.45.3 | 2026-10-12 |
 | [v1.0.4](https://github.com/Juxnji/moodify/releases/tag/v1.0.4) | 1.3.4 | 2.45.3 | 2026-10-12 |
 | [v1.0.3](https://github.com/Juxnji/moodify/releases/tag/v1.0.3) | 1.3.4 | 2.45.3 | 2026-10-10 |
 | [v1.0.2](https://github.com/Juxnji/moodify/releases/tag/v1.0.2) | 1.3.4 | 2.45.3 | 2026-10-10 |
@@ -143,7 +144,7 @@ What changed in each version: [**Changelog**](CHANGELOG.md)
 Usually not needed – the installer picks the right one. If you want to anyway:
 
 ```powershell
-$env:MOODIFY_VERSION = "v1.0.5"; iwr -useb https://raw.githubusercontent.com/Juxnji/moodify/main/install.ps1 | iex
+$env:MOODIFY_VERSION = "v1.1.0"; iwr -useb https://raw.githubusercontent.com/Juxnji/moodify/main/install.ps1 | iex
 ```
 
 </details>

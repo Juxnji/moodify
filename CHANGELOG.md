@@ -5,6 +5,29 @@ Which version fits which Spotify version is also listed in [`versions.json`](ver
 
 ---
 
+## [v1.1.0](https://github.com/Juxnji/moodify/releases/tag/v1.1.0) – 2026-10-16
+
+**Tested with:** Spotify 1.3.4 and 1.3.5 · Spicetify 2.45.3 · Windows 11
+
+### New: Moodify's own Now Playing card
+Spotify builds the right sidebar differently on every PC (at least two layouts, switched on remotely) and changes it with nearly every update. Reshaping it never looked the same everywhere – so Moodify now draws **its own card** on top of it:
+- the cover across the whole sidebar – or the **video** Spotify plays there (Canvas, music videos), mirrored into the card
+- title (click → album) and artists (click → artist)
+- like button and close button, both only on hover
+- glow in the album color on hover
+
+Spotify's sidebar keeps running invisibly underneath, so videos still play. Other panels in the same place (queue, lyrics, friends) are left alone.
+
+### Fixed
+- Songs with a Canvas or a music video: the video stayed a small square at the top on some PCs – it now always fills the sidebar
+- Songs without a cover (local files) no longer keep showing the previous cover
+- Works with Spotify 1.3.5
+
+### For developers
+- `tests/npv-layouts.html` now also covers playing videos, a video inside a section card (must be ignored) and other panels; `node tests/run-tests.mjs` runs everything in headless Edge in real time
+
+---
+
 ## [v1.0.5](https://github.com/Juxnji/moodify/releases/tag/v1.0.5) – 2026-10-12
 
 **Tested with:** Spotify 1.3.4 · Spicetify 2.45.3 · Windows 11

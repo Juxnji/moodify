@@ -239,103 +239,201 @@
     if (extra && !extra.classList.contains("main-nowPlayingBar-extraControls")) extra.classList.add("main-nowPlayingBar-extraControls");
   }
 
-  // >>> npv-marker (tested on its own in tests/npv-layouts.html)
-  // ---------- Now playing sidebar: find the artwork and the song title ----------
-  // Spotify ships (at least) two layouts of this sidebar, picked per install, and the
-  // Spicetify class map doesn't know either of them on Spotify 1.3.3+:
-  //   A) [data-testid="NPV_Panel_OpenDiv"]: artwork in [data-testid="track-visual-enhancement"],
-  //      title row next to it, the section cards (h2 titles) are siblings further up
-  //   B) [data-npv-root]: artwork in [data-testid="cover-art-slot"] or a canvas/video,
-  //      the block below holds the title row, the section cards and "Next in queue"
-  // Both: header, scroll area > … > artwork + title row + cards with an h2 title + queue.
-  // Instead of relying on either structure we look for the artwork and the title and mark
-  // what to keep; user.css shows only these (same idea as Spicy Lyrics and LiquidMusic):
-  //   data-aura-npv="panel"   – the sidebar, once both were found
-  //   data-aura-npv="content" – the closest box around artwork and title
-  //   data-aura-npv="visual"  – the artwork block        data-aura-npv="info" – the title block
-  //   data-aura-npv-chain     – wrappers between panel and content (fill the height)
-  //   data-aura-npv-fill      – every box from the artwork block down to the picture (stretched)
-  //   data-aura-npv-hide      – everything else (credits, tour dates, music videos, queue, …)
-  const NPV_ATTRS = ["data-aura-npv", "data-aura-npv-hide", "data-aura-npv-chain", "data-aura-npv-fill"];
-  // Most specific first: in layout A the artwork block also contains a canvas video
-  const NPV_ARTWORK = ['[data-testid="track-visual-enhancement"]', '[data-testid="cover-art-slot"]', "[data-canvas-surface]", ".canvasVideoContainerNPV", "video"];
-  const NPV_CARDS = "h2, h3, section, #SpicyLyricsNPVCard";
-  const childOf = (parent, el) => { while (el && el.parentElement !== parent) el = el.parentElement; return el; };
+  // >>> npv-card (tested on its own in tests/npv-layouts.html)
+  // ---------- Now playing sidebar: Moodify's own card ----------
+  // Spotify builds this sidebar differently per install (at least two layouts, switched on
+  // remotely) and changes it with nearly every update, so reshaping it never looked the same
+  // on every PC. Moodify draws its own card on top instead: cover – or the video Spotify is
+  // playing there –, title, artists and a like button. Spotify's sidebar stays underneath,
+  // invisible (opacity 0, so its Canvas and music videos keep playing and can be mirrored).
+  const NPV_MARKERS = '[data-npv-root], [data-testid="NPV_Panel_OpenDiv"], [data-testid="cover-art-slot"], [data-testid="track-visual-enhancement"]';
+  const ICONS = {
+    collapse: '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.75" y="1.75" width="12.5" height="12.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.25 1.75v12.5" stroke="currentColor" stroke-width="1.5"/><path d="M4.75 5.5 7.25 8l-2.5 2.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    add: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M1.5 8a6.5 6.5 0 1 1 13 0 6.5 6.5 0 0 1-13 0zM8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0z"/><path fill="currentColor" d="M11.75 8a.75.75 0 0 1-.75.75H8.75V11a.75.75 0 0 1-1.5 0V8.75H5a.75.75 0 0 1 0-1.5h2.25V5a.75.75 0 0 1 1.5 0v2.25H11a.75.75 0 0 1 .75.75z"/></svg>',
+    added: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm11.748-1.97a.75.75 0 0 0-1.06-1.06l-4.47 4.47-1.405-1.406a.75.75 0 1 0-1.061 1.06l2.466 2.467 5.53-5.53z"/></svg>',
+  };
+  const idOf = uri => (uri || "").split(":").pop();
+
+  const card = document.createElement("div");
+  card.id = "moodify-npv";
+  card.innerHTML =
+    '<div class="mnpv-media"><div class="mnpv-cover"></div><div class="mnpv-cover"></div><canvas class="mnpv-video"></canvas></div>' +
+    '<div class="mnpv-shade"></div>' +
+    '<button class="mnpv-collapse" type="button">' + ICONS.collapse + "</button>" +
+    '<div class="mnpv-info"><div class="mnpv-text"><div class="mnpv-title" role="link" tabindex="0"></div><div class="mnpv-artists"></div></div>' +
+    '<button class="mnpv-like" type="button" role="switch"></button></div>';
+  const covers = [...card.querySelectorAll(".mnpv-cover")];
+  const videoCanvas = card.querySelector(".mnpv-video");
+  const titleEl = card.querySelector(".mnpv-title");
+  const artistsEl = card.querySelector(".mnpv-artists");
+  const likeBtn = card.querySelector(".mnpv-like");
+  const collapseBtn = card.querySelector(".mnpv-collapse");
+  // Spotify reacts to clicks on the whole sidebar; keep ours to ourselves
+  for (const type of ["pointerdown", "pointerup", "mousedown", "mouseup", "contextmenu", "dblclick"]) card.addEventListener(type, e => e.stopPropagation());
+
+  let cardFront = 0, cardCover = "", npvUri = null, cardLiked = null;
 
   function findNowPlayingPanel() {
-    return document.querySelector("#Desktop_PanelContainer_Id") || document.querySelector("aside.NowPlayingView, [data-npv-root]");
+    const panel = document.querySelector("#Desktop_PanelContainer_Id") || document.querySelector("aside.NowPlayingView, aside[data-npv-root]");
+    if (!panel) return null;
+    const isNowPlaying = panel.matches("[data-npv-root], .NowPlayingView")
+      || [...panel.querySelectorAll(NPV_MARKERS)].some(el => !card.contains(el))
+      || /Aktueller Titel|Now playing/i.test(panel.getAttribute("aria-label") || "");
+    return isNowPlaying ? panel : null;
   }
 
-  function markNowPlaying(panel, trackName) {
-    if (!panel) return;
-    const marks = new Map();
-    const mark = (el, attr, value = "") => { if (!el) return; if (!marks.has(el)) marks.set(el, {}); marks.get(el)[attr] = value; };
-    const hide = el => mark(el, "data-aura-npv-hide");
-
-    const inner = panel.firstElementChild;
-    const header = inner && inner.children.length > 1 ? inner.firstElementChild : null;
-    const usable = el => !(header && header.contains(el));
-    let visual = null;
-    for (const selector of NPV_ARTWORK) {
-      visual = [...panel.querySelectorAll(selector)].find(usable);
-      if (visual) break;
+  function setCardCover(url) {
+    if (!url) {
+      // No cover (e.g. local files): plain dark card instead of the previous song's cover
+      if (cardCover) { cardCover = ""; covers.forEach(c => c.classList.remove("visible")); }
+      return;
     }
-    // The song title: Spotify's title text style, else an element showing exactly the track name
-    let title = [...panel.querySelectorAll(".encore-text-title-small")].find(el => usable(el) && !(visual && visual.contains(el)) && !el.closest(NPV_CARDS));
-    if (!title && trackName) {
-      title = [...panel.querySelectorAll("a, span, p, div")].find(el => el.children.length === 0 && el.textContent.trim() === trackName && usable(el) && !(visual && visual.contains(el)));
-    }
-
-    if (visual && title) {
-      let content = visual.parentElement;
-      while (content && !content.contains(title)) content = content.parentElement;
-      if (content && content !== panel && content !== inner && panel.contains(content)) {
-        const visualBox = childOf(content, visual);
-        const infoBox = childOf(content, title);
-        mark(panel, "data-aura-npv", "panel");
-        mark(content, "data-aura-npv", "content");
-        mark(visualBox, "data-aura-npv", "visual");
-        mark(infoBox, "data-aura-npv", "info");
-        for (const c of content.children) if (c !== visualBox && c !== infoBox) hide(c);
-
-        // Artwork block: keep only the way down to the picture (video, else the cover image) –
-        // drops Spotify's dimming layers and gradients next to it – and mark every box on
-        // that way so user.css can stretch it, whatever size Spotify gave it
-        const media = visual.matches("video, img") ? visual : visual.querySelector("video") || visual.querySelector("img") || visual;
-        for (let box = visualBox; box && box !== media; ) {
-          const keep = childOf(box, media);
-          for (const c of box.children) if (c !== keep) hide(c);
-          mark(keep, "data-aura-npv-fill");
-          box = keep;
-        }
-
-        // Title block: the largest box around the title without any section card in it
-        // (keeps the title, the artists and the ×/+ buttons together)
-        let titleBlock = title;
-        while (titleBlock.parentElement && titleBlock !== infoBox && !titleBlock.parentElement.querySelector(NPV_CARDS)) titleBlock = titleBlock.parentElement;
-        for (let box = infoBox; box && box !== titleBlock && box !== title; ) {
-          const keep = childOf(box, title);
-          for (const c of box.children) if (c !== keep) hide(c);
-          box = keep;
-        }
-
-        // Wrappers up to the scroll area: fill the height, hide what sits next to them
-        // (section cards in layout A, scrollbars) – but never the header
-        for (let n = content; n.parentElement && n.parentElement !== inner && n.parentElement !== panel; n = n.parentElement) {
-          mark(n.parentElement, "data-aura-npv-chain");
-          for (const c of n.parentElement.children) if (c !== n) hide(c);
-        }
-      }
-    }
-
-    // Only touch attributes that actually change
-    for (const el of [panel, ...panel.querySelectorAll("[data-aura-npv], [data-aura-npv-hide], [data-aura-npv-chain], [data-aura-npv-fill]")]) {
-      const want = marks.get(el) || {};
-      for (const a of NPV_ATTRS) if (!(a in want) && el.hasAttribute(a)) el.removeAttribute(a);
-    }
-    for (const [el, want] of marks) for (const [a, v] of Object.entries(want)) if (el.getAttribute(a) !== v) el.setAttribute(a, v);
+    if (url === cardCover) return;
+    cardCover = url;
+    const img = new Image();
+    img.onload = () => {
+      if (cardCover !== url) return;
+      const next = covers[1 - cardFront];
+      next.style.backgroundImage = `url("${url}")`;
+      next.classList.add("visible");
+      covers[cardFront].classList.remove("visible");
+      cardFront = 1 - cardFront;
+    };
+    img.src = url;
   }
-  // <<< npv-marker
+
+  function setCardText(item) {
+    const albumUri = item.album?.uri || item.metadata?.album_uri || item.metadata?.context_uri;
+    titleEl.textContent = item.name || item.metadata?.title || "";
+    titleEl.title = titleEl.textContent;
+    titleEl.onclick = () => albumUri && Spicetify.Platform.History.push(`/${albumUri.split(":")[1]}/${idOf(albumUri)}`);
+    titleEl.onkeydown = e => { if (e.key === "Enter") titleEl.onclick(); };
+    let artists = (item.artists || []).filter(a => a?.name);
+    if (!artists.length && item.metadata?.artist_name) artists = [{ name: item.metadata.artist_name, uri: item.metadata.artist_uri }];
+    artistsEl.replaceChildren();
+    artists.forEach((artist, i) => {
+      if (i) artistsEl.append(", ");
+      const a = document.createElement("a");
+      a.textContent = artist.name;
+      if (artist.uri) a.onclick = () => Spicetify.Platform.History.push(`/artist/${idOf(artist.uri)}`);
+      artistsEl.append(a);
+    });
+    artistsEl.title = artistsEl.textContent;
+  }
+
+  function setCardLiked(liked) {
+    if (liked === cardLiked) return;
+    cardLiked = liked;
+    likeBtn.innerHTML = liked ? ICONS.added : ICONS.add;
+    likeBtn.setAttribute("aria-checked", String(!!liked));
+    const label = isGerman() ? (liked ? "Aus „Lieblingssongs“ entfernen" : "Zu „Lieblingssongs“ hinzufügen") : (liked ? "Remove from Liked Songs" : "Add to Liked Songs");
+    likeBtn.setAttribute("aria-label", label);
+    likeBtn.title = label;
+  }
+  const readLiked = () => { try { return !!Spicetify.Player.getHeart(); } catch { return false; } };
+  likeBtn.addEventListener("click", () => {
+    try { Spicetify.Player.toggleHeart(); } catch {}
+    setCardLiked(!cardLiked);
+    setTimeout(() => setCardLiked(readLiked()), 800);
+  });
+
+  // Closing: Spotify's own toggle for this sidebar is the small cover in the player bar
+  // (same test id in every layout and language). It only reacts to a full press, a plain
+  // .click() is ignored – so press and release it like a mouse would.
+  function pressLikeMouse(el) {
+    const r = el.getBoundingClientRect();
+    const o = { bubbles: true, cancelable: true, composed: true, clientX: r.x + r.width / 2, clientY: r.y + r.height / 2, button: 0, pointerId: 1, pointerType: "mouse", isPrimary: true };
+    el.dispatchEvent(new PointerEvent("pointerdown", { ...o, buttons: 1 }));
+    el.dispatchEvent(new MouseEvent("mousedown", { ...o, buttons: 1 }));
+    el.dispatchEvent(new PointerEvent("pointerup", o));
+    el.dispatchEvent(new MouseEvent("mouseup", o));
+    el.dispatchEvent(new MouseEvent("click", o));
+  }
+  collapseBtn.addEventListener("click", () => {
+    const toggle = document.querySelector('[data-testid="now-playing-widget"] [data-testid="cover-art-button"]');
+    if (toggle) { pressLikeMouse(toggle); return; }
+    // Fallback: the sidebar's own close button – only one whose name clearly says so
+    const panel = card.parentElement;
+    const close = panel && [...panel.querySelectorAll("button")].find(b => !card.contains(b) &&
+      /(Aktueller Titel|Now playing).*(ausblenden|hide)|^(Schließen|Close)$/i.test(b.getAttribute("aria-label") || ""));
+    if (close) pressLikeMouse(close);
+  });
+
+  // ----- Mirror the video Spotify plays in its (invisible) sidebar -----
+  // Only videos that belong to the artwork: walking up from the video we must reach the box
+  // with Spotify's song title before a box with a section heading (those hold "similar music
+  // videos" and the like). Protected videos (DRM) can't be copied – the cover stays then.
+  const shownBySpotify = (el, panel) => {
+    for (let e = el; e && e !== panel; e = e.parentElement) {
+      const cs = getComputedStyle(e);
+      if (cs.visibility === "hidden") return false;
+      if (cs.opacity === "0" && e.parentElement !== panel) return false; // Moodify hides the panel's own children
+      if (cs.display === "none") return false;
+    }
+    return true;
+  };
+  const belongsToArtwork = (video, panel) => {
+    for (let e = video.parentElement; e && e !== panel; e = e.parentElement) {
+      if (e.querySelector(".encore-text-title-small")) return true;
+      if (e.querySelector("h2, h3, section")) return false;
+    }
+    return true;
+  };
+  function findArtworkVideo(panel) {
+    return [...panel.querySelectorAll("video")].find(v =>
+      !card.contains(v) && !v.mediaKeys && v.readyState >= 2 && v.videoWidth > 0 && !v.ended &&
+      shownBySpotify(v, panel) && belongsToArtwork(v, panel)) || null;
+  }
+
+  const videoCtx = videoCanvas.getContext("2d");
+  let mirrored = null, mirrorLoop = 0;
+  function drawMirror() {
+    mirrorLoop = 0;
+    if (!mirrored || !card.isConnected) return;
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.max(1, Math.round(card.clientWidth * dpr)), h = Math.max(1, Math.round(card.clientHeight * dpr));
+    if (videoCanvas.width !== w || videoCanvas.height !== h) { videoCanvas.width = w; videoCanvas.height = h; }
+    const vw = mirrored.videoWidth, vh = mirrored.videoHeight;
+    if (vw && vh) {
+      const scale = Math.max(w / vw, h / vh), sw = w / scale, sh = h / scale;
+      try {
+        videoCtx.drawImage(mirrored, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, w, h);
+        if (card.getAttribute("data-mode") !== "video") card.setAttribute("data-mode", "video");
+      } catch {}
+    }
+    mirrorLoop = requestAnimationFrame(drawMirror);
+  }
+  function setMirror(video) {
+    if (video === mirrored) return;
+    mirrored = video;
+    if (mirrorLoop) { cancelAnimationFrame(mirrorLoop); mirrorLoop = 0; }
+    if (video) mirrorLoop = requestAnimationFrame(drawMirror);
+    else card.setAttribute("data-mode", "cover");
+  }
+
+  function renderNowPlaying() {
+    const panel = findNowPlayingPanel();
+    for (const el of document.querySelectorAll("[data-moodify-npv]")) if (el !== panel) el.removeAttribute("data-moodify-npv");
+    if (!panel) {
+      if (card.isConnected) card.remove();
+      setMirror(null);
+      return;
+    }
+    if (!panel.hasAttribute("data-moodify-npv")) panel.setAttribute("data-moodify-npv", "");
+    if (card.parentElement !== panel || panel.lastElementChild !== card) panel.appendChild(card);
+    if (!card.hasAttribute("data-mode")) card.setAttribute("data-mode", "cover");
+
+    const item = currentItem();
+    if (item) {
+      setCardCover(coverOf(item));
+      if (item.uri !== npvUri) { npvUri = item.uri; setCardText(item); cardLiked = null; }
+      setCardLiked(readLiked());
+    }
+    const label = isGerman() ? "Ansicht „Aktueller Titel“ ausblenden" : "Hide Now Playing view";
+    if (collapseBtn.getAttribute("aria-label") !== label) { collapseBtn.setAttribute("aria-label", label); collapseBtn.title = label; }
+    setMirror(findArtworkVideo(panel));
+  }
+  // <<< npv-card
 
   // ---------- Debug info for bug reports (Ctrl+Alt+Shift+M) ----------
   // Copies the layout of the now playing sidebar (element types, sizes, Spotify's
@@ -343,26 +441,25 @@
   function debugInfo() {
     const panel = findNowPlayingPanel();
     const version = Spicetify.Platform?.PlatformData?.client_version_triple || Spicetify.Platform?.version || "?";
-    const lines = [`Moodify debug · Spotify ${version} · panel: ${panel ? "found" : "missing"}`];
+    const lines = [`Moodify debug · Spotify ${version} · panel: ${panel ? "found" : "missing"} · card: ${card.isConnected ? card.getAttribute("data-mode") : "not shown"} · video: ${mirrored ? mirrored.videoWidth + "x" + mirrored.videoHeight : "none"}`];
     const walk = (el, depth) => {
       if (depth > 14 || lines.length > 450) return;
       for (const c of el.children) {
-        if (c instanceof SVGElement || c.tagName === "PATH") continue;
+        if (c instanceof SVGElement || c.tagName === "PATH" || c === card) continue;
         const r = c.getBoundingClientRect();
         if (!r.width && !r.height && depth > 4) continue;
         const tags = [
           [...c.classList].slice(0, 2).join("."),
           c.getAttribute("data-testid") && `[${c.getAttribute("data-testid")}]`,
-          c.getAttribute("data-aura-npv") && `{${c.getAttribute("data-aura-npv")}}`,
-          c.hasAttribute("data-aura-npv-hide") && "{hide}",
-          c.hasAttribute("data-aura-npv-chain") && "{chain}",
+          c.tagName === "VIDEO" && `{video ${c.videoWidth}x${c.videoHeight} ready=${c.readyState} paused=${c.paused} drm=${!!c.mediaKeys}}`,
           getComputedStyle(c).display === "none" && "(hidden)"
         ].filter(Boolean).join(" ");
         lines.push(`${" ".repeat(depth)}${c.tagName.toLowerCase()} ${Math.round(r.width)}x${Math.round(r.height)} ${tags}`);
         walk(c, depth + 1);
       }
     };
-    if (panel) walk(panel, 0);
+    const sidebar = panel || document.querySelector("#Desktop_PanelContainer_Id");
+    if (sidebar) walk(sidebar, 0);
     return lines.join("\n");
   }
   // Spicetify's shortcut helper is sometimes not ready yet when the theme starts → wait for it
@@ -381,12 +478,16 @@
     requestAnimationFrame(() => {
       domQueued = false;
       compatBridge();
-      markNowPlaying(findNowPlayingPanel(), currentItem()?.name);
+      renderNowPlaying();
       if (root.getAttribute("data-aura-page") === "home") processRecents();
     });
   }).observe(document.body, { childList: true, subtree: true });
   compatBridge();
-  markNowPlaying(findNowPlayingPanel(), currentItem()?.name);
+  renderNowPlaying();
+  // Video start/stop, like state and Spotify swapping cover and video by styles don't always
+  // change elements, which the observer above doesn't see → check again every second
+  setInterval(renderNowPlaying, 1000);
+  Spicetify.Player.addEventListener("songchange", () => setTimeout(renderNowPlaying, 50));
 
   // ---------- Remember the current page (for the tidied-up home page) ----------
   const setPage = loc => {

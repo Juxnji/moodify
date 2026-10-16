@@ -10,11 +10,24 @@
     '<text x="320" y="560" font-family="Arial" font-size="56" font-weight="700" text-anchor="middle" fill="#fff">TEST COVER</text></svg>'
   );
   window.TEST_COVER = cover;
-  const item = { uri: "spotify:track:test", name: "Test Song", metadata: { image_xlarge_url: cover } };
+  const item = {
+    uri: "spotify:track:test",
+    name: "Test Song",
+    album: { uri: "spotify:album:testalbum", name: "Test Album" },
+    artists: [{ uri: "spotify:artist:a1", name: "Test Artist" }, { uri: "spotify:artist:a2", name: "Second Artist" }],
+    images: [{ url: cover, label: "large" }],
+    metadata: { image_xlarge_url: cover },
+  };
+  let liked = false;
   window.Spicetify = {
-    Player: { data: { item }, addEventListener() {} },
+    Player: {
+      data: { item },
+      addEventListener() {},
+      getHeart: () => liked,
+      toggleHeart: () => { liked = !liked; },
+    },
     Platform: {
-      History: { location: { pathname: "/test" }, listen() {} },
+      History: { location: { pathname: "/test" }, listen() {}, push() {} },
       PlayerAPI: { getState: () => ({ item }) },
       ControlMessageAPI: { setTitlebarHeight: async () => {} },
       ClipboardAPI: { copy() {} },
