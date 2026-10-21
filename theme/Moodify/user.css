@@ -12,7 +12,6 @@
   --aura-glass: rgba(12, 12, 14, 0.42);  /* tint of the glass panels (medium) */
   --aura-glass-strong: rgba(12, 12, 14, 0.62);
   --aura-glass-border: rgba(255, 255, 255, 0.08);
-  --aura-blur: 8px;
   --aura-radius: 14px;
   --aura-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -35,13 +34,17 @@ body,
 }
 .aura-bg-layer {
   position: absolute;
-  inset: -80px;                         /* extra margin for the blur */
+  inset: -80px;                         /* a bit larger than the window, keeps the cover's framing */
   background-size: cover;
   background-position: center;
-  filter: blur(14px) saturate(1.35);    /* slightly blurred */
   transform: scale(1.08);
   opacity: 0;
   transition: opacity 1.2s ease;
+}
+/* theme.js blurs the cover once per song and shows it as a still image – no live CSS
+   blur. Only if the cover can't be read, the layer is blurred here instead. */
+.aura-bg-layer.unblurred {
+  filter: blur(14px) saturate(1.35);
 }
 .aura-bg-layer.visible { opacity: 1; }
 .aura-bg-shade {
@@ -59,6 +62,9 @@ body,
 }
 
 /* ---------- Frosted glass panels ---------- */
+/* No live blur behind the panels (backdrop-filter): the background is already blurred,
+   so a tint alone looks the same – and the graphics card doesn't have to re-blur
+   everything behind a panel whenever something in it moves. */
 #global-nav-bar {
   background: transparent !important;
 }
@@ -67,7 +73,6 @@ body,
 #main-view + div > div,
 [data-testid="now-playing-bar"] {
   background: var(--aura-glass) !important;
-  backdrop-filter: blur(var(--aura-blur)) saturate(1.4);
   border: 1px solid var(--aura-glass-border);
   border-radius: var(--aura-radius) !important;
 }
@@ -102,8 +107,7 @@ div:has(> [data-testid="now-playing-bar"]) {
 }
 /* The bar that appears at the top when scrolling down: glass instead of grey */
 #main-view .main-topBar-container > div[style*="--background-base"] {
-  background: rgba(12, 12, 14, 0.55) !important;
-  backdrop-filter: blur(16px) saturate(1.4);
+  background: rgba(12, 12, 14, 0.66) !important;
 }
 
 /* Green/blue Spotify buttons in the album color */
@@ -210,7 +214,13 @@ img,
 [data-testid="now-playing-bar"] .x-progressBar-fillColor {
   background-color: var(--aura-accent) !important;
   box-shadow: 0 0 10px rgba(var(--aura-accent-rgb), 0.6);
-  transition: transform 0.95s linear, background-color 0.6s ease;
+}
+/* The progress bar glides thanks to theme.js (a few tiny moves a second). No CSS glide
+   here: that would make Spotify redraw on every screen refresh – up to 260 times a second –
+   for a bar that moves 2–3 pixels a second. */
+[data-testid="playback-progressbar"] .x-progressBar-fillColor,
+[data-testid="playback-progressbar"] [data-testid="progress-bar-handle"] {
+  transition: none;
 }
 [data-testid="now-playing-bar"] [data-testid="progress-bar-handle"] {
   background-color: #fff !important;
@@ -499,6 +509,5 @@ a[href],
   position: absolute;
   top: 12px;
   left: 12px;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.55);
 }

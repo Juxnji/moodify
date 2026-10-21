@@ -2,6 +2,105 @@
 // - Background: the current album cover, blurred, with a soft cross-fade
 // - Accent color: taken from the album cover
 // - Remembers which page is open (for the tidied-up home page)
+// Kept light on purpose: the cover is blurred once per song instead of live on every
+// frame, and nothing is redrawn while nothing changes.
+
+// ---------- Lighter Spicy Lyrics (once per PC, before it loads) ----------
+// Moodify covers the Now Playing sidebar with its own card, so Spicy Lyrics' animated
+// background and lyrics card there are never seen – but they keep rendering every frame.
+// Turn those off, use the calm cover background on the lyrics page and cap its frame
+// rate. Only done once, so anything changed later in Spicy Lyrics' own settings stays.
+(function lighterSpicyLyrics() {
+  try {
+    if (localStorage.getItem("moodify:spicy-light")) return;
+    const settings = JSON.parse(localStorage.getItem("SL:settings") || "{}");
+    Object.assign(settings, {
+      showNpvDynamicBg: false,
+      disableNpvLyrics: true,
+      backgroundStyle: "cover",
+      backgroundBlur: 32,
+      animationFpsCapEnabled: true,
+      animationFpsCap: 60,
+    });
+    localStorage.setItem("SL:settings", JSON.stringify(settings));
+    localStorage.setItem("moodify:spicy-light", "1");
+  } catch {}
+})();
+
+// ---------- Calm Spicy Lyrics' frame loop while its lyrics aren't open ----------
+// Spicy Lyrics asks for a new frame on every screen refresh, all the time – with the music
+// paused and its lyrics page closed, too. That alone keeps Spotify drawing 150–260 frames a
+// second for nothing. While the lyrics page isn't open, that loop now ticks 5 times a second;
+// as soon as the page shows up (or you click / press a key) it runs at full speed again.
+// Only Spicy's own endless loop is slowed down, every other animation is left alone.
+(function calmSpicyFrames() {
+  const native = window.requestAnimationFrame;
+  const nativeCancel = window.cancelAnimationFrame;
+  if (typeof native !== "function" || typeof nativeCancel !== "function" || window.__moodifyFrames) return;
+  window.__moodifyFrames = true;
+
+  const IDLE_DELAY = 200;      // ms between ticks while no lyrics are on screen
+  const seen = new WeakMap();  // callback → times it asked for a frame, or "spicy" / "other" once known
+  const waiting = new Map();   // our ids (negative) → slowed-down tick
+  let nextId = -1, awakeUntil = 0, checkedAt = -1e9, lyricsShown = false;
+
+  // A callback that keeps asking for frames is a loop: check once where it comes from
+  function isSpicyLoop(cb) {
+    const known = seen.get(cb);
+    if (typeof known === "string") return known === "spicy";
+    const count = (known || 0) + 1;
+    if (count < 30) { seen.set(cb, count); return false; }
+    const callers = (new Error().stack || "").split("\n").slice(2, 7).join("\n");
+    const spicy = /spicy-lyrics/i.test(callers);
+    seen.set(cb, spicy ? "spicy" : "other");
+    return spicy;
+  }
+
+  function lyricsOnScreen(now) {
+    if (now - checkedAt > 300) {
+      checkedAt = now;
+      const page = document.getElementById("SpicyLyricsPage");
+      lyricsShown = !!page && page.getClientRects().length > 0;
+    }
+    return lyricsShown;
+  }
+
+  function moodifyFrame(cb) {
+    if (typeof cb !== "function" || document.hidden || !isSpicyLoop(cb)) return native.call(window, cb);
+    const now = performance.now();
+    if (now < awakeUntil || lyricsOnScreen(now)) return native.call(window, cb);
+    const id = nextId--;
+    const tick = { raf: 0, run: time => { waiting.delete(id); cb(time); } };
+    tick.timer = setTimeout(() => { tick.raf = native.call(window, tick.run); }, IDLE_DELAY);
+    waiting.set(id, tick);
+    return id;
+  }
+
+  function moodifyCancel(id) {
+    if (!(id < 0)) return nativeCancel.call(window, id);
+    const tick = waiting.get(id);
+    if (!tick) return;
+    clearTimeout(tick.timer);
+    if (tick.raf) nativeCancel.call(window, tick.raf);
+    waiting.delete(id);
+  }
+
+  // Clicks and key presses (e.g. opening the lyrics): full speed right away
+  function wake() {
+    awakeUntil = performance.now() + 1500;
+    checkedAt = -1e9;
+    for (const tick of waiting.values()) {
+      if (tick.raf) continue;
+      clearTimeout(tick.timer);
+      tick.raf = native.call(window, tick.run);
+    }
+  }
+  for (const type of ["pointerdown", "keydown"]) window.addEventListener(type, wake, { capture: true, passive: true });
+
+  window.requestAnimationFrame = moodifyFrame;
+  window.cancelAnimationFrame = moodifyCancel;
+})();
+
 (function moodify() {
   if (!window.Spicetify?.Player?.addEventListener || !Spicetify.Platform?.History || !document.body) {
     setTimeout(moodify, 300);
@@ -22,6 +121,7 @@
   document.body.prepend(bg);
   let front = 0;
   let lastImage = "";
+  let lastBlobUrl = null;
 
   const toUrl = uri => {
     if (!uri) return "";
@@ -29,18 +129,56 @@
     return uri;
   };
 
-  function setBackground(url) {
+  // The cover is loaded once (with permission to read it) and used for both the blurred
+  // background and the accent color
+  const loadCover = url => new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+
+  // Blur the cover once on a small canvas and show that as a still image. A CSS blur on
+  // the full-window layer would be recalculated by the graphics card again and again.
+  function blurredCopy(img) {
+    return new Promise(resolve => {
+      try {
+        const size = 160;
+        const c = document.createElement("canvas");
+        c.width = c.height = size;
+        const ctx = c.getContext("2d");
+        // blur and color boost of the old live effects (background + glass panels) in one go
+        ctx.filter = "blur(2.2px) saturate(1.85)";
+        // a bit larger than the canvas, so the blurred edges don't fade out
+        ctx.drawImage(img, -6, -6, size + 12, size + 12);
+        c.toBlob(blob => resolve(blob ? URL.createObjectURL(blob) : null), "image/jpeg", 0.92);
+      } catch {
+        resolve(null);   // cover couldn't be read → fall back to the CSS blur
+      }
+    });
+  }
+
+  async function setBackground(url, img) {
     if (!url || url === lastImage) return;
     lastImage = url;
-    const img = new Image();
-    img.onload = () => {
-      const next = layers[1 - front];
-      next.style.backgroundImage = `url("${url}")`;
-      next.classList.add("visible");
-      layers[front].classList.remove("visible");
-      front = 1 - front;
-    };
-    img.src = url;
+    const blurred = img ? await blurredCopy(img) : null;
+    if (lastImage !== url) { if (blurred) URL.revokeObjectURL(blurred); return; }   // song changed meanwhile
+    const shown = blurred || url;
+    const pre = new Image();
+    pre.src = shown;
+    await pre.decode().catch(() => {});
+    if (lastImage !== url) { if (blurred) URL.revokeObjectURL(blurred); return; }
+    const next = layers[1 - front];
+    next.classList.toggle("unblurred", !blurred);
+    next.style.backgroundImage = `url("${shown}")`;
+    next.classList.add("visible");
+    layers[front].classList.remove("visible");
+    front = 1 - front;
+    // free the previous blurred image once the cross-fade is over
+    const old = lastBlobUrl;
+    lastBlobUrl = blurred;
+    if (old) setTimeout(() => URL.revokeObjectURL(old), 2000);
   }
 
   // ---------- Accent color from the cover ----------
@@ -80,48 +218,39 @@
 
   // Spicetify.colorExtractor returns nothing on Spotify 1.3.3+,
   // so we read the color from a scaled-down copy of the cover ourselves.
-  function extractColor(url) {
-    return new Promise(resolve => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onerror = () => resolve(null);
-      img.onload = () => {
-        try {
-          const size = 32;
-          const c = document.createElement("canvas");
-          c.width = c.height = size;
-          const ctx = c.getContext("2d", { willReadFrequently: true });
-          ctx.drawImage(img, 0, 0, size, size);
-          const data = ctx.getImageData(0, 0, size, size).data;
-          // Sort pixels into 12 hue buckets, weighted by saturation
-          const bins = Array.from({ length: 12 }, () => ({ w: 0, r: 0, g: 0, b: 0 }));
-          let grey = { w: 0, r: 0, g: 0, b: 0 };
-          for (let i = 0; i < data.length; i += 4) {
-            const r = data[i], g = data[i + 1], b = data[i + 2];
-            const max = Math.max(r, g, b), min = Math.min(r, g, b);
-            const v = max / 255, s = max ? (max - min) / max : 0;
-            if (v < 0.12) continue;                     // ignore near-black
-            if (s < 0.18) { grey.w++; grey.r += r; grey.g += g; grey.b += b; continue; }
-            let h;
-            const d = max - min;
-            if (max === r) h = ((g - b) / d) % 6; else if (max === g) h = (b - r) / d + 2; else h = (r - g) / d + 4;
-            const bin = bins[Math.floor(((h * 60 + 360) % 360) / 30)];
-            const w = s * s * (0.4 + v);
-            bin.w += w; bin.r += r * w; bin.g += g * w; bin.b += b * w;
-          }
-          const best = bins.reduce((a, b) => (b.w > a.w ? b : a));
-          if (best.w < 4) {
-            // Almost colorless cover: use a light grey accent
-            resolve(grey.w ? [Math.round(grey.r / grey.w), Math.round(grey.g / grey.w), Math.round(grey.b / grey.w)].map(x => Math.max(x, 190)) : [210, 210, 210]);
-            return;
-          }
-          resolve([best.r / best.w, best.g / best.w, best.b / best.w].map(Math.round));
-        } catch (e) {
-          resolve(null);
-        }
-      };
-      img.src = url;
-    });
+  function colorOf(img) {
+    try {
+      const size = 32;
+      const c = document.createElement("canvas");
+      c.width = c.height = size;
+      const ctx = c.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0, size, size);
+      const data = ctx.getImageData(0, 0, size, size).data;
+      // Sort pixels into 12 hue buckets, weighted by saturation
+      const bins = Array.from({ length: 12 }, () => ({ w: 0, r: 0, g: 0, b: 0 }));
+      let grey = { w: 0, r: 0, g: 0, b: 0 };
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        const v = max / 255, s = max ? (max - min) / max : 0;
+        if (v < 0.12) continue;                     // ignore near-black
+        if (s < 0.18) { grey.w++; grey.r += r; grey.g += g; grey.b += b; continue; }
+        let h;
+        const d = max - min;
+        if (max === r) h = ((g - b) / d) % 6; else if (max === g) h = (b - r) / d + 2; else h = (r - g) / d + 4;
+        const bin = bins[Math.floor(((h * 60 + 360) % 360) / 30)];
+        const w = s * s * (0.4 + v);
+        bin.w += w; bin.r += r * w; bin.g += g * w; bin.b += b * w;
+      }
+      const best = bins.reduce((a, b) => (b.w > a.w ? b : a));
+      if (best.w < 4) {
+        // Almost colorless cover: use a light grey accent
+        return grey.w ? [Math.round(grey.r / grey.w), Math.round(grey.g / grey.w), Math.round(grey.b / grey.w)].map(x => Math.max(x, 190)) : [210, 210, 210];
+      }
+      return [best.r / best.w, best.g / best.w, best.b / best.w].map(Math.round);
+    } catch (e) {
+      return null;
+    }
   }
 
   // Spicetify.Player.data is sometimes still empty after starting with paused music,
@@ -145,8 +274,10 @@
     }
     lastUri = item.uri;
     const image = coverOf(item);
-    setBackground(image);
-    const rgb = image && (await extractColor(image));
+    if (!image || image === lastImage) return;   // same cover (same album): nothing to redo
+    const img = await loadCover(image);
+    setBackground(image, img);
+    const rgb = img && colorOf(img);
     if (rgb) setAccent(rgb);
   }
 
@@ -154,6 +285,53 @@
   // Safety net in case a song change event gets lost
   setInterval(() => { const item = currentItem(); if (item && item.uri !== lastUri) update(); }, 1500);
   update();
+
+  // ---------- Gliding progress bar, the light way ----------
+  // Spotify moves the progress bar once a second – to where the song will be one second later
+  // (meant for a 1-second CSS glide). Moodify shows where the song is right now and nudges the
+  // bar forward by about a pixel at a time (4–20 times a second, depending on bar width and
+  // song length), so it glides. A CSS glide looks the same but makes Spotify redraw on every
+  // screen refresh. While you drag or click the bar, Spotify is left alone.
+  (function glidingProgressBar() {
+    const player = Spicetify.Player;
+    if (![player.isPlaying, player.getProgress, player.getDuration].every(f => typeof f === "function")) return;
+    let timer = 0, hold = 0, bar = null, shown = "";
+    // Spotify set its own value (one second ahead) → put the real one back before it's drawn
+    const watch = new MutationObserver(() => {
+      if (bar && bar.style.getPropertyValue("--progress-bar-transform") !== shown) nudge();
+    });
+    function nudge() {
+      const duration = player.getDuration();
+      if (!bar || document.hidden || !player.isPlaying() || performance.now() < hold || !(duration > 0)) return;
+      shown = Math.min(100, Math.max(0, (player.getProgress() / duration) * 100)) + "%";
+      bar.style.setProperty("--progress-bar-transform", shown);
+    }
+    function glide() {
+      timer = 0;
+      if (document.hidden || !player.isPlaying()) return;
+      if (!bar?.isConnected) {
+        watch.disconnect();
+        bar = document.querySelector('[data-testid="playback-progressbar"] .progress-bar');
+        if (bar) watch.observe(bar, { attributes: true, attributeFilter: ["style"] });
+      }
+      nudge();
+      const width = bar?.offsetWidth, duration = player.getDuration();
+      // wait as long as the song needs to move the bar by one pixel
+      timer = setTimeout(glide, width > 0 && duration > 0 ? Math.min(250, Math.max(50, duration / width)) : 250);
+    }
+    const start = () => { if (!timer) glide(); };
+    player.addEventListener("onplaypause", start);
+    document.addEventListener("visibilitychange", start);
+    setInterval(start, 1500);   // in case a play event gets lost
+    window.addEventListener("pointerdown", e => {
+      if (e.target.closest?.('[data-testid="playback-progressbar"]')) hold = Infinity;
+    }, true);
+    // after letting go, give Spotify a moment to jump to the new spot
+    const release = () => { if (hold === Infinity) hold = performance.now() + 1000; };
+    window.addEventListener("pointerup", release, true);
+    window.addEventListener("pointercancel", release, true);
+    start();
+  })();
 
   // ---------- Window buttons (top right) ----------
   // Windows paints a dark block behind minimize/maximize/close that is as tall
@@ -385,29 +563,41 @@
       shownBySpotify(v, panel) && belongsToArtwork(v, panel)) || null;
   }
 
+  // Light on purpose: checked about 30 times a second and only redrawn when the video
+  // shows a new picture – not on every screen refresh (60–240 times a second on gaming
+  // monitors). Nothing is drawn while the video is paused or Spotify is minimized.
   const videoCtx = videoCanvas.getContext("2d");
-  let mirrored = null, mirrorLoop = 0;
-  function drawMirror() {
-    mirrorLoop = 0;
-    if (!mirrored || !card.isConnected) return;
+  let mirrored = null, mirrorTimer = 0, lastVideoTime = -1;
+  new ResizeObserver(() => {
     const dpr = window.devicePixelRatio || 1;
-    const w = Math.max(1, Math.round(card.clientWidth * dpr)), h = Math.max(1, Math.round(card.clientHeight * dpr));
-    if (videoCanvas.width !== w || videoCanvas.height !== h) { videoCanvas.width = w; videoCanvas.height = h; }
-    const vw = mirrored.videoWidth, vh = mirrored.videoHeight;
-    if (vw && vh) {
-      const scale = Math.max(w / vw, h / vh), sw = w / scale, sh = h / scale;
-      try {
-        videoCtx.drawImage(mirrored, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, w, h);
-        if (card.getAttribute("data-mode") !== "video") card.setAttribute("data-mode", "video");
-      } catch {}
+    videoCanvas.width = Math.max(1, Math.round(card.clientWidth * dpr));
+    videoCanvas.height = Math.max(1, Math.round(card.clientHeight * dpr));
+    lastVideoTime = -1;   // redraw at the new size
+  }).observe(card);
+  function drawMirror() {
+    mirrorTimer = 0;
+    if (!mirrored || !card.isConnected) return;
+    const time = mirrored.currentTime;
+    if (!document.hidden && time !== lastVideoTime) {
+      const w = videoCanvas.width, h = videoCanvas.height, vw = mirrored.videoWidth, vh = mirrored.videoHeight;
+      if (vw && vh && w > 1 && h > 1) {
+        const scale = Math.max(w / vw, h / vh), sw = w / scale, sh = h / scale;
+        try {
+          videoCtx.drawImage(mirrored, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, w, h);
+          lastVideoTime = time;
+          if (card.getAttribute("data-mode") !== "video") card.setAttribute("data-mode", "video");
+        } catch {}
+      }
     }
-    mirrorLoop = requestAnimationFrame(drawMirror);
+    mirrorTimer = setTimeout(drawMirror, 33);
   }
   function setMirror(video) {
     if (video === mirrored) return;
     mirrored = video;
-    if (mirrorLoop) { cancelAnimationFrame(mirrorLoop); mirrorLoop = 0; }
-    if (video) mirrorLoop = requestAnimationFrame(drawMirror);
+    lastVideoTime = -1;
+    clearTimeout(mirrorTimer);
+    mirrorTimer = 0;
+    if (video) drawMirror();
     else card.setAttribute("data-mode", "cover");
   }
 

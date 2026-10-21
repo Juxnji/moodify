@@ -23,6 +23,9 @@
     Player: {
       data: { item },
       addEventListener() {},
+      isPlaying: () => false,
+      getProgress: () => 0,
+      getDuration: () => 180000,
       getHeart: () => liked,
       toggleHeart: () => { liked = !liked; },
     },
