@@ -4,8 +4,8 @@
 
 <p align="center">
   <a href="https://github.com/Juxnji/moodify/releases/latest"><img src="https://img.shields.io/github/v/release/Juxnji/moodify?style=for-the-badge&color=a855f7&label=Moodify" alt="Latest release"></a>
-  <img src="https://img.shields.io/badge/Spotify-1.3.4%20%7C%201.3.5-1DB954?style=for-the-badge&logo=spotify&logoColor=white" alt="Tested with Spotify 1.3.4 and 1.3.5">
-  <img src="https://img.shields.io/badge/Spicetify-2.45.3-ff4d8d?style=for-the-badge" alt="Tested with Spicetify 2.45.3">
+  <img src="https://img.shields.io/badge/Spotify-1.3.6%20%7C%201.3.8-1DB954?style=for-the-badge&logo=spotify&logoColor=white" alt="Tested with Spotify 1.3.6 and 1.3.8">
+  <img src="https://img.shields.io/badge/Spicetify-2.46.4-ff4d8d?style=for-the-badge" alt="Tested with Spicetify 2.46.4">
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 10 and 11">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge" alt="MIT License"></a>
 </p>
@@ -47,6 +47,7 @@
 | ✨ **Glow** | Buttons glow on hover, the sidebar lights up in the album color |
 | 🏠 **Clean home page** | Only "Recents" (or "Jump back in") as a fixed 2 × 4 grid – hide single tiles with **×** |
 | 🎬 **Now playing card** | Moodify's own card in the right sidebar – cover or the song's video, title, artists, like button. **Looks the same on every PC**, whatever layout Spotify uses |
+| 🪶 **Light on your PC** | Nothing is redrawn while nothing changes – the blur is calculated once per song, not on every frame. Spotify needs only a fraction of the CPU and GPU, nice for gaming with Spotify open |
 | 🛒 **Marketplace included** | Patched for new Spotify versions: the *Themes · Snippets · Apps* tabs are back |
 | 🎤 **Extras** | [Spicy Lyrics](https://github.com/Spikerko/spicy-lyrics) (karaoke-style lyrics), volume in %, "Play next" |
 | 🔢 **Right version, automatically** | The installer detects your Spotify version and picks the Moodify version that matches |
@@ -127,7 +128,8 @@ It automatically gets the newest Moodify version that matches your Spotify.
 
 | Moodify | Tested with Spotify | Spicetify | Date |
 |:---:|:---:|:---:|:---:|
-| [**v1.1.0**](https://github.com/Juxnji/moodify/releases/tag/v1.1.0) | 1.3.4, 1.3.5 | 2.45.3 | 2026-10-16 |
+| [**v1.2.0**](https://github.com/Juxnji/moodify/releases/tag/v1.2.0) | 1.3.6, 1.3.8 | 2.46.4 | 2026-11-09 |
+| [v1.1.0](https://github.com/Juxnji/moodify/releases/tag/v1.1.0) | 1.3.4, 1.3.5 | 2.45.3 | 2026-10-16 |
 | [v1.0.5](https://github.com/Juxnji/moodify/releases/tag/v1.0.5) | 1.3.4 | 2.45.3 | 2026-10-12 |
 | [v1.0.4](https://github.com/Juxnji/moodify/releases/tag/v1.0.4) | 1.3.4 | 2.45.3 | 2026-10-12 |
 | [v1.0.3](https://github.com/Juxnji/moodify/releases/tag/v1.0.3) | 1.3.4 | 2.45.3 | 2026-10-10 |
@@ -179,6 +181,25 @@ Run the [install line](#-installation) again first – maybe there's already a f
 If not: click into Spotify, press <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>M</kbd> and paste the copied text
 into a [problem report](https://github.com/Juxnji/moodify/issues/new/choose) together with a screenshot.
 It only contains the layout of the sidebar – no song titles, no names.
+
+</details>
+
+<details>
+<summary><b>The right sidebar turned into a thin strip</b></summary>
+<br>
+
+Since Spotify 1.3.6 the Now Playing sidebar doesn't close completely anymore – it folds into a thin strip at the right edge.
+That's what the card's close button does now. **Click the strip** to bring the sidebar back.
+
+</details>
+
+<details>
+<summary><b>Spicy Lyrics looks calmer than before</b></summary>
+<br>
+
+To save CPU and GPU, Moodify sets a few Spicy Lyrics options **once**: a calm cover background on the lyrics page,
+no hidden animations in the sidebar and a 60 FPS cap. You can switch everything back in Spicy Lyrics' own settings –
+Moodify won't change them again.
 
 </details>
 

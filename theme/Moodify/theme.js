@@ -295,27 +295,30 @@
   (function glidingProgressBar() {
     const player = Spicetify.Player;
     if (![player.isPlaying, player.getProgress, player.getDuration].every(f => typeof f === "function")) return;
+    // Right after Spotify starts, the player isn't ready yet and these calls fail
+    const ask = (fn, fallback) => { try { return fn(); } catch { return fallback; } };
+    const playing = () => ask(() => player.isPlaying(), false);
     let timer = 0, hold = 0, bar = null, shown = "";
     // Spotify set its own value (one second ahead) → put the real one back before it's drawn
     const watch = new MutationObserver(() => {
       if (bar && bar.style.getPropertyValue("--progress-bar-transform") !== shown) nudge();
     });
     function nudge() {
-      const duration = player.getDuration();
-      if (!bar || document.hidden || !player.isPlaying() || performance.now() < hold || !(duration > 0)) return;
-      shown = Math.min(100, Math.max(0, (player.getProgress() / duration) * 100)) + "%";
+      const duration = ask(() => player.getDuration(), 0);
+      if (!bar || document.hidden || !playing() || performance.now() < hold || !(duration > 0)) return;
+      shown = Math.min(100, Math.max(0, (ask(() => player.getProgress(), 0) / duration) * 100)) + "%";
       bar.style.setProperty("--progress-bar-transform", shown);
     }
     function glide() {
       timer = 0;
-      if (document.hidden || !player.isPlaying()) return;
+      if (document.hidden || !playing()) return;
       if (!bar?.isConnected) {
         watch.disconnect();
         bar = document.querySelector('[data-testid="playback-progressbar"] .progress-bar');
         if (bar) watch.observe(bar, { attributes: true, attributeFilter: ["style"] });
       }
       nudge();
-      const width = bar?.offsetWidth, duration = player.getDuration();
+      const width = bar?.offsetWidth, duration = ask(() => player.getDuration(), 0);
       // wait as long as the song needs to move the bar by one pixel
       timer = setTimeout(glide, width > 0 && duration > 0 ? Math.min(250, Math.max(50, duration / width)) : 250);
     }
@@ -515,9 +518,18 @@
     setTimeout(() => setCardLiked(readLiked()), 800);
   });
 
-  // Closing: Spotify's own toggle for this sidebar is the small cover in the player bar
-  // (same test id in every layout and language). It only reacts to a full press, a plain
-  // .click() is ignored – so press and release it like a mouse would.
+  // Closing: Spotify's own "hide" button in the sidebar. Since Spotify 1.3.6 it folds the
+  // sidebar into a thin strip at the right edge (a click on the strip brings it back). If the
+  // sidebar is still open after that, the small cover in the player bar – it toggled the
+  // sidebar in older versions. Both only react to a full press, a plain .click() is ignored –
+  // so press and release them like a mouse would.
+  const HIDE_LABEL = /(Aktueller Titel|Now playing).*(ausblenden|hide)|(ausblenden|hide).*(Aktueller Titel|Now playing)|^(Schließen|Close)$/i;
+  const sidebarOpen = () => {
+    const panel = findNowPlayingPanel();
+    if (!panel) return false;
+    const r = panel.getBoundingClientRect();
+    return Math.min(r.right, window.innerWidth) - Math.max(r.left, 0) > 100;   // folded = only a strip visible
+  };
   function pressLikeMouse(el) {
     const r = el.getBoundingClientRect();
     const o = { bubbles: true, cancelable: true, composed: true, clientX: r.x + r.width / 2, clientY: r.y + r.height / 2, button: 0, pointerId: 1, pointerType: "mouse", isPrimary: true };
@@ -528,13 +540,16 @@
     el.dispatchEvent(new MouseEvent("click", o));
   }
   collapseBtn.addEventListener("click", () => {
-    const toggle = document.querySelector('[data-testid="now-playing-widget"] [data-testid="cover-art-button"]');
-    if (toggle) { pressLikeMouse(toggle); return; }
-    // Fallback: the sidebar's own close button – only one whose name clearly says so
+    // only a button whose name clearly says "hide now playing view" (not "hide in this album")
     const panel = card.parentElement;
-    const close = panel && [...panel.querySelectorAll("button")].find(b => !card.contains(b) &&
-      /(Aktueller Titel|Now playing).*(ausblenden|hide)|^(Schließen|Close)$/i.test(b.getAttribute("aria-label") || ""));
-    if (close) pressLikeMouse(close);
+    const hide = panel && [...panel.querySelectorAll("button")].find(b => !card.contains(b) && HIDE_LABEL.test(b.getAttribute("aria-label") || ""));
+    if (hide) pressLikeMouse(hide);
+    // give Spotify's folding animation time before checking
+    setTimeout(() => {
+      if (!sidebarOpen()) return;
+      const toggle = document.querySelector('[data-testid="now-playing-widget"] [data-testid="cover-art-button"]');
+      if (toggle) pressLikeMouse(toggle);
+    }, hide ? 1200 : 0);
   });
 
   // ----- Mirror the video Spotify plays in its (invisible) sidebar -----

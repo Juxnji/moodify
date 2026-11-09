@@ -5,6 +5,33 @@ Which version fits which Spotify version is also listed in [`versions.json`](ver
 
 ---
 
+## [v1.2.0](https://github.com/Juxnji/moodify/releases/tag/v1.2.0) – 2026-11-09
+
+**Tested with:** Spotify 1.3.6 and 1.3.8 · Spicetify 2.46.4 · Windows 11
+
+### New: much lighter on your PC
+Same look, but Spotify now needs a fraction of the CPU and GPU it used before – nice when Spotify stays open on a second screen while gaming. Measured on a 260 Hz monitor:
+
+| | before (v1.1.0) | now |
+|---|---|---|
+| Music paused | ~20 % of one CPU core | ~5 % |
+| Music playing | ~66 % of one CPU core | ~5–10 % |
+| Graphics card | up to ~3 % | ~0 % |
+
+What changed under the hood:
+- The background cover is blurred **once per song** instead of live on every frame
+- No live blur behind the glass panels anymore – the background is already blurred, so a tint looks the same
+- The progress bar still glides, but in tiny steps instead of making Spotify redraw on every screen refresh. Bonus: dragging the progress and volume bars no longer lags behind
+- The video in the Now Playing card is only redrawn when the video actually shows a new picture
+- **Spicy Lyrics** keeps asking for new frames all the time, even when no lyrics are open. While its lyrics page is closed, Moodify slows that down to a few frames a second – as soon as you open the lyrics, it runs at full speed again
+- **Spicy Lyrics defaults (set once):** calm cover background on the lyrics page, the hidden animations in the sidebar off, 60 FPS cap. Changed your mind? Everything can be switched back in Spicy Lyrics' own settings – Moodify only sets this once
+
+### Spotify 1.3.6 – 1.3.8
+- Works with Spicetify 2.46.x, where the player isn't ready yet right after Spotify starts (this used to break the card and the home page)
+- Since Spotify 1.3.6 the right sidebar doesn't close anymore – it **folds into a thin strip** at the right edge. The card's close button now uses this; click the strip to bring the sidebar back
+
+---
+
 ## [v1.1.0](https://github.com/Juxnji/moodify/releases/tag/v1.1.0) – 2026-10-16
 
 **Tested with:** Spotify 1.3.4 and 1.3.5 · Spicetify 2.45.3 · Windows 11
