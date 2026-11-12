@@ -4,8 +4,8 @@
 
 <p align="center">
   <a href="https://github.com/Juxnji/moodify/releases/latest"><img src="https://img.shields.io/github/v/release/Juxnji/moodify?style=for-the-badge&color=a855f7&label=Moodify" alt="Latest release"></a>
-  <img src="https://img.shields.io/badge/Spotify-1.3.6%20%7C%201.3.8-1DB954?style=for-the-badge&logo=spotify&logoColor=white" alt="Tested with Spotify 1.3.6 and 1.3.8">
-  <img src="https://img.shields.io/badge/Spicetify-2.46.4-ff4d8d?style=for-the-badge" alt="Tested with Spicetify 2.46.4">
+  <img src="https://img.shields.io/badge/Spotify-1.3.6%20%7C%201.3.8%20%7C%201.3.9-1DB954?style=for-the-badge&logo=spotify&logoColor=white" alt="Tested with Spotify 1.3.6, 1.3.8 and 1.3.9">
+  <img src="https://img.shields.io/badge/Spicetify-2.46.7-ff4d8d?style=for-the-badge" alt="Tested with Spicetify 2.46.7">
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 10 and 11">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge" alt="MIT License"></a>
 </p>
@@ -128,7 +128,8 @@ It automatically gets the newest Moodify version that matches your Spotify.
 
 | Moodify | Tested with Spotify | Spicetify | Date |
 |:---:|:---:|:---:|:---:|
-| [**v1.2.0**](https://github.com/Juxnji/moodify/releases/tag/v1.2.0) | 1.3.6, 1.3.8 | 2.46.4 | 2026-11-09 |
+| [**v1.2.1**](https://github.com/Juxnji/moodify/releases/tag/v1.2.1) | 1.3.6, 1.3.8, 1.3.9 | 2.46.7 | 2026-11-12 |
+| [v1.2.0](https://github.com/Juxnji/moodify/releases/tag/v1.2.0) | 1.3.6, 1.3.8 | 2.46.4 | 2026-11-09 |
 | [v1.1.0](https://github.com/Juxnji/moodify/releases/tag/v1.1.0) | 1.3.4, 1.3.5 | 2.45.3 | 2026-10-16 |
 | [v1.0.5](https://github.com/Juxnji/moodify/releases/tag/v1.0.5) | 1.3.4 | 2.45.3 | 2026-10-12 |
 | [v1.0.4](https://github.com/Juxnji/moodify/releases/tag/v1.0.4) | 1.3.4 | 2.45.3 | 2026-10-12 |

@@ -5,6 +5,15 @@ Which version fits which Spotify version is also listed in [`versions.json`](ver
 
 ---
 
+## [v1.2.1](https://github.com/Juxnji/moodify/releases/tag/v1.2.1) – 2026-11-12
+
+**Tested with:** Spotify 1.3.6, 1.3.8 and 1.3.9 · Spicetify 2.46.7 · Windows 11
+
+### Spotify 1.3.9
+Moodify works with Spotify 1.3.9 as it is – nothing in the theme had to change. This release only adds 1.3.9 to the list of tested versions, so the installer picks it automatically. Spicetify 2.46.7 (the installer updates it for you if it is older) is the first version that officially supports Spotify 1.3.9.
+
+---
+
 ## [v1.2.0](https://github.com/Juxnji/moodify/releases/tag/v1.2.0) – 2026-11-09
 
 **Tested with:** Spotify 1.3.6 and 1.3.8 · Spicetify 2.46.4 · Windows 11
